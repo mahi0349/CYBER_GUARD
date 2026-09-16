@@ -93,9 +93,10 @@ temp/
 *.swp
 *.swo
 
-# 6. Assignment / Specification PDFs
+# 6. Local Project Documents & Problem Statements
 *.pdf
 Problem_Statement_9.pdf
+PROJECT_PLAN.md
 
 # 7. IDEs and OS Metadata
 .DS_Store
