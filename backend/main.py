@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from .api.account import router as account_router
+from .api.dashboard import router as dashboard_router
+from .api.deepfake import router as deepfake_router
 from .api.events import router as events_router
 from .api.health import router as health_router
 from .api.phishing import router as phishing_router
-from .api.deepfake import router as deepfake_router
-from .api.account import router as account_router
+from .api.playbooks import router as playbooks_router
 from .config import API_DESCRIPTION, API_TITLE, API_VERSION, CORS_ORIGINS
 from .database import init_db
 
@@ -41,6 +44,8 @@ app.include_router(events_router, prefix="/api")
 app.include_router(phishing_router, prefix="/api")
 app.include_router(deepfake_router, prefix="/api")
 app.include_router(account_router, prefix="/api")
+app.include_router(dashboard_router, prefix="/api")
+app.include_router(playbooks_router, prefix="/api")
 
 @app.get("/")
 async def root():

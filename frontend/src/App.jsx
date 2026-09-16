@@ -18,15 +18,17 @@ import {
   Radio,
   FileCode,
   LayoutDashboard,
-  UserX
+  UserX,
+  Crosshair
 } from 'lucide-react';
 import { fetchHealth, fetchEvents } from './api/client';
+import CommandDashboard from './components/CommandDashboard';
 import PhishingAnalyzer from './components/PhishingAnalyzer';
 import DeepfakeAnalyzer from './components/DeepfakeAnalyzer';
 import AccountAnalyzer from './components/AccountAnalyzer';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('phishing'); // 'overview' | 'phishing' | 'deepfake' | 'account'
+  const [activeTab, setActiveTab] = useState('command'); // 'command' | 'phishing' | 'deepfake' | 'account' | 'overview'
   const [healthData, setHealthData] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,7 @@ function App() {
               </span>
             </div>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Odisha Knowledge Corporation Limited (OKCL) Cyber Defence Platform
+              Unified AI Cyber Threat, Phishing, Deepfake & Incident Response Platform
             </p>
           </div>
         </div>
@@ -118,8 +120,30 @@ function App() {
           padding: '4px',
           borderRadius: '10px',
           backgroundColor: 'rgba(15, 23, 42, 0.8)',
-          border: '1px solid var(--border-subtle)'
+          border: '1px solid var(--border-subtle)',
+          flexWrap: 'wrap'
         }}>
+          <button
+            onClick={() => setActiveTab('command')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '7px 14px',
+              borderRadius: '6px',
+              border: 'none',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'command' ? 'var(--accent-cyan)' : 'transparent',
+              color: activeTab === 'command' ? '#ffffff' : 'var(--text-secondary)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <LayoutDashboard size={14} />
+            SOC Command Center
+          </button>
+
           <button
             onClick={() => setActiveTab('phishing')}
             style={{
@@ -138,7 +162,7 @@ function App() {
             }}
           >
             <Mail size={14} />
-            Scenario A: Phishing Detector
+            Scenario A: Phishing
           </button>
 
           <button
@@ -159,7 +183,7 @@ function App() {
             }}
           >
             <Eye size={14} />
-            Scenario B: Deepfake & Impersonation
+            Scenario B: Deepfake
           </button>
 
           <button
@@ -200,8 +224,8 @@ function App() {
               transition: 'all 0.2s'
             }}
           >
-            <LayoutDashboard size={14} />
-            System Architecture & Core
+            <Layers size={14} />
+            Architecture & Matrix
           </button>
         </div>
 
@@ -258,6 +282,11 @@ function App() {
               Retry
             </button>
           </div>
+        )}
+
+        {/* Tab 0: SOC Command Center (Primary Dashboard) */}
+        {activeTab === 'command' && (
+          <CommandDashboard onNavigateScenario={(tab) => setActiveTab(tab)} />
         )}
 
         {/* Tab 1: Phishing Analyzer (Scenario A) */}
@@ -348,16 +377,16 @@ function App() {
                   </div>
                   <span className="badge badge-safe">Scenario B : READY</span>
                 </div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Deepfake & Impersonation</h3>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Deepfake & Digital Impersonation</h3>
                 <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '16px' }}>
-                  Error Level Analysis (ELA) + DCT frequency forensics + authority figure impersonation heuristics.
+                  Error Level Analysis (ELA) + Frequency-domain (DCT) forensics + executive impersonation detection.
                 </p>
                 <button 
                   onClick={() => setActiveTab('deepfake')}
                   className="btn-cyber-primary" 
                   style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '8px' }}
                 >
-                  Open Deepfake & Impersonation Analyzer
+                  Open Deepfake Analyzer
                 </button>
               </div>
 
@@ -368,30 +397,30 @@ function App() {
                     width: '38px',
                     height: '38px',
                     borderRadius: '8px',
-                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
-                    <UserX size={20} color="#f59e0b" />
+                    <UserX size={20} color="#ef4444" />
                   </div>
                   <span className="badge badge-safe">Scenario C : READY</span>
                 </div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Account Takeover & Anomaly</h3>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Account Takeover & Anomalies</h3>
                 <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '16px' }}>
-                  Physical geo-velocity validation (Haversine) + brute-force bursts + device novelty & Isolation Forest ML.
+                  Isolation Forest unsupervised anomaly detection + Haversine impossible-travel & brute force rules.
                 </p>
                 <button 
                   onClick={() => setActiveTab('account')}
                   className="btn-cyber-primary" 
                   style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '8px' }}
                 >
-                  Open Account Anomaly Analyzer
+                  Open Account Analyzer
                 </button>
               </div>
 
-              {/* Card 4: Unified Risk & Response Engine */}
-              <div className="cyber-card" style={{ padding: '24px' }}>
+              {/* Card 4: Unified Platform */}
+              <div className="cyber-card" style={{ padding: '24px', borderColor: 'var(--border-active)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                   <div style={{
                     width: '38px',
@@ -406,13 +435,17 @@ function App() {
                   </div>
                   <span className="badge badge-safe">Unified Core : ACTIVE</span>
                 </div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Risk Engine & Response</h3>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Risk Engine & Playbooks</h3>
                 <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '16px' }}>
-                  Normalized 0-100 scoring + human-readable evidence-driven explanations + automated mitigation recommendations.
+                  Normalized 0-100 scoring + cross-module campaign correlation + automated response playbooks.
                 </p>
-                <div style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <CheckCircle2 size={14} /> Database Store Active
-                </div>
+                <button 
+                  onClick={() => setActiveTab('command')}
+                  className="btn-cyber-primary" 
+                  style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '8px' }}
+                >
+                  Open SOC Command Center
+                </button>
               </div>
             </div>
 
@@ -518,7 +551,7 @@ function App() {
                     ))
                   ) : (
                     <div style={{ color: 'var(--text-muted)', padding: '20px', textAlign: 'center', fontSize: '0.8rem' }}>
-                      No events logged in database yet. Run analysis in Scenario A to trigger events.
+                      No events logged in database yet. Run analysis in Scenario A, B, or C to trigger events.
                     </div>
                   )}
                 </div>
@@ -540,8 +573,8 @@ function App() {
         flexWrap: 'wrap',
         gap: '10px'
       }}>
-        <span>CYBERGUARD — Odisha Knowledge Corporation Limited (OKCL) Hackathon</span>
-        <span>Scenario A: Phishing · Scenario B: Deepfake & Impersonation — Active</span>
+        <span>CYBERGUARD — AI-Powered Cyber Defence & Incident Response Platform</span>
+        <span>Phishing · Deepfake Forensics · Account Takeover · Automated Playbooks</span>
       </footer>
     </div>
   );

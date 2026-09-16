@@ -24,6 +24,8 @@ export async function fetchEventById(id) {
   return response.json();
 }
 
+// ── Phishing & Social Engineering (Scenario A) ─────────────────────────
+
 export async function analyzePhishing(payload) {
   const response = await fetch(`${API_BASE_URL}/analyze/phishing`, {
     method: 'POST',
@@ -126,3 +128,88 @@ export async function generateSyntheticLogs(payload) {
   return response.json();
 }
 
+// ── SOC Command Dashboard & Telemetry (Phase 5 & 7) ───────────────────
+
+export async function fetchDashboardMetrics() {
+  const response = await fetch(`${API_BASE_URL}/dashboard/metrics`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dashboard metrics: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function fetchDashboardTimeline(limit = 40) {
+  const response = await fetch(`${API_BASE_URL}/dashboard/timeline?limit=${limit}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch timeline: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function fetchDashboardDistribution() {
+  const response = await fetch(`${API_BASE_URL}/dashboard/distribution`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch distributions: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function fetchHighRiskEntities() {
+  const response = await fetch(`${API_BASE_URL}/dashboard/entities`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch risk entities: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function fetchCorrelations() {
+  const response = await fetch(`${API_BASE_URL}/dashboard/correlations`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch correlations: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+// ── Playbook Simulator & Containment (Phase 6) ────────────────────────
+
+export async function fetchPlaybookCatalog() {
+  const response = await fetch(`${API_BASE_URL}/playbooks/catalog`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch playbook catalog: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function executePlaybookAction(payload) {
+  const response = await fetch(`${API_BASE_URL}/playbooks/execute`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Playbook execution failed with status ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchIncidentActions(eventId) {
+  const response = await fetch(`${API_BASE_URL}/playbooks/actions/${eventId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch actions: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function updateIncidentStatus(payload) {
+  const response = await fetch(`${API_BASE_URL}/playbooks/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Status update failed with status ${response.status}`);
+  }
+  return response.json();
+}
