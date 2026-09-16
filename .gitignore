@@ -1,0 +1,106 @@
+# ==========================================
+# CYBERGUARD — Git Ignore Rules
+# ==========================================
+
+# 1. Environment & Secrets / Credentials
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.crt
+*.token
+*.credentials
+credentials.json
+secrets.json
+auth.json
+id_rsa
+id_ed25519
+*.pub
+
+# 2. Databases & Local Data Storage
+*.db
+*.sqlite
+*.sqlite3
+cyberguard.db
+backend/cyberguard.db
+*.dump
+*.sql
+
+# 3. Python Cache & Virtual Environments
+__pycache__/
+*/__pycache__/
+*/**/__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 4. Node.js & Frontend Build Outputs
+node_modules/
+*/node_modules/
+*/**/node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+dist/
+dist-ssr/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.vite/
+
+# 5. Logs & Temporary Files
+*.log
+logs/
+*/logs/
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# 6. IDEs and OS Metadata
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
