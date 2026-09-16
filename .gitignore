@@ -93,7 +93,11 @@ temp/
 *.swp
 *.swo
 
-# 6. IDEs and OS Metadata
+# 6. Assignment / Specification PDFs
+*.pdf
+Problem_Statement_9.pdf
+
+# 7. IDEs and OS Metadata
 .DS_Store
 Thumbs.db
 ehthumbs.db
