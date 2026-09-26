@@ -1,0 +1,10 @@
+user_id,timestamp,ip_address,location,device,failed_attempts,success,user_agent
+U1001,2026-09-22T09:12:00,103.21.14.8,Bhubaneswar India,MacBook Pro,0,1,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
+U1001,2026-09-22T09:30:00,103.21.14.8,Bhubaneswar India,MacBook Pro,0,1,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
+U1001,2026-09-22T11:45:00,103.21.14.8,Bhubaneswar India,MacBook Pro,0,1,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
+U1002,2026-09-22T08:00:00,49.36.12.18,Cuttack India,Windows PC,0,1,Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+U1002,2026-09-22T10:15:00,49.36.12.18,Cuttack India,Windows PC,0,1,Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+U1003,2026-09-22T03:15:10,185.220.101.5,Frankfurt Germany (Tor Exit),Unknown Linux Machine,14,0,Python-urllib/3.9
+U1003,2026-09-22T03:18:22,185.220.101.5,Frankfurt Germany (Tor Exit),Unknown Linux Machine,15,0,Python-urllib/3.9
+U1003,2026-09-22T03:21:45,185.220.101.5,Frankfurt Germany (Tor Exit),Unknown Linux Machine,0,1,curl/7.68.0
+U1004,2026-09-22T07:22:00,103.21.14.8,Bhubaneswar India,iPhone 15,0,1,Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)

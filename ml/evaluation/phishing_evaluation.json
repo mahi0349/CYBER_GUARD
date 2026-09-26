@@ -1,0 +1,53 @@
+{
+  "selected_model": "Random Forest Classifier",
+  "random_forest": {
+    "model_name": "Random Forest Classifier",
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        600,
+        0
+      ],
+      [
+        0,
+        600
+      ]
+    ]
+  },
+  "logistic_regression": {
+    "model_name": "Logistic Regression",
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        600,
+        0
+      ],
+      [
+        0,
+        600
+      ]
+    ]
+  },
+  "features": [
+    "url_length",
+    "domain_length",
+    "has_ip",
+    "has_https",
+    "has_at_symbol",
+    "has_double_slash",
+    "subdomain_count",
+    "hyphen_count",
+    "digit_count",
+    "special_character_count",
+    "suspicious_keywords_count",
+    "entropy"
+  ]
+}

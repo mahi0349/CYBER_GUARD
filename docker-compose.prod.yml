@@ -1,0 +1,55 @@
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cyberguard_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cyberguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cyberguard_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-cyberguard}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cyberguard} -d ${POSTGRES_DB:-cyberguard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. FastAPI Threat Orchestration Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyberguard_backend
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-cyberguard}:${POSTGRES_PASSWORD:-cyberguard_secure_password}@postgres:5432/${POSTGRES_DB:-cyberguard}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY:-cyberguard_prod_super_secret_jwt_key_92813}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 3. React Frontend (Nginx Production Reverse Proxy)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api/v1
+    container_name: cyberguard_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local

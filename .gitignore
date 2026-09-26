@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+*.db
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ML models (small trained models included for zero-setup deployment)
+# ml/models/*.joblib
+!ml/models/*.joblib
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

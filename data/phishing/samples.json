@@ -1,0 +1,30 @@
+[
+  {
+    "id": "url-001",
+    "name": "Urgent Bank Account Verification",
+    "url": "https://secure-chase-online-verify-account.com/login/auth?token=928348",
+    "expected_type": "phishing",
+    "expected_severity": "critical"
+  },
+  {
+    "id": "url-002",
+    "name": "Legitimate Corporate Portal",
+    "url": "https://accounts.google.com/signin/v2/identifier",
+    "expected_type": "safe",
+    "expected_severity": "safe"
+  },
+  {
+    "id": "url-003",
+    "name": "Suspicious Cloudflare Lookalike",
+    "url": "http://192.168.1.105/cloudflare-challenge/session-verify.html",
+    "expected_type": "phishing",
+    "expected_severity": "critical"
+  },
+  {
+    "id": "url-004",
+    "name": "Microsoft 365 Password Reset Phish",
+    "url": "https://login.microsoftonline.security-verify-tenant.net/common/oauth2",
+    "expected_type": "phishing",
+    "expected_severity": "high"
+  }
+]

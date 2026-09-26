@@ -1,0 +1,8 @@
+{
+  "model": "Isolation Forest",
+  "contamination": 0.05,
+  "n_samples": 5000,
+  "baseline_inlier_prediction": 1,
+  "attack_anomaly_prediction": -1,
+  "status": "Trained & Validated"
+}
