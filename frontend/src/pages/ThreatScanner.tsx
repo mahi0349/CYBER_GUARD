@@ -5,19 +5,14 @@ import {
   Mail,
   Image as ImageIcon,
   Mic,
-  FileText,
   Search,
   Zap,
   Loader2,
   Upload,
   CheckCircle2,
-  AlertTriangle,
-  Activity,
-  Layers,
-  Camera,
-  Cpu
+  AlertTriangle
 } from 'lucide-react';
-import { analyzeUrl, analyzeImage, analyzeLoginLog } from '../services/api';
+import { analyzeUrl, analyzeEmail, analyzeImage, analyzeAudio } from '../services/api';
 import { AnalysisResponse } from '../types';
 import { RiskScoreMeter } from '../components/dashboard/RiskScoreMeter';
 import { SeverityBadge } from '../components/dashboard/SeverityBadge';
@@ -25,12 +20,12 @@ import { EvidenceList } from '../components/dashboard/EvidenceList';
 import { MitreBadge } from '../components/dashboard/MitreBadge';
 
 export const ThreatScanner: React.FC = () => {
-  const [activeType, setActiveType] = useState<'url' | 'email' | 'image' | 'audio' | 'login'>('url');
+  const [activeType, setActiveType] = useState<'url' | 'email' | 'image' | 'audio'>('url');
   const [urlInput, setUrlInput] = useState('https://secure-chase-online-verify-account.com/login/auth');
   const [emailSubject, setEmailSubject] = useState('URGENT: Your account has been temporarily restricted');
   const [emailSender, setEmailSender] = useState('security-notice@paypa1-support-team.com');
   const [emailBody, setEmailBody] = useState('Please verify your credentials immediately within 24 hours to prevent permanent account suspension.');
-  const [userIdInput, setUserIdInput] = useState('U1003');
+
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   
   const [loading, setLoading] = useState(false);
@@ -43,22 +38,15 @@ export const ThreatScanner: React.FC = () => {
         const res = await analyzeUrl(urlInput);
         setResult(res);
       } else if (activeType === 'email') {
-        const res = await analyzeUrl(urlInput);
-        // enrich
-        res.threat_type = 'phishing';
-        res.severity = 'CRITICAL';
-        res.risk_score = 92;
+        const res = await analyzeEmail(emailSender, emailSubject, emailBody);
         setResult(res);
-      } else if (activeType === 'image' || activeType === 'audio') {
-        const targetFile = mediaFile || new File(['sample_payload'], activeType === 'image' ? 'suspicious_id.png' : 'voice_clone.wav', { type: activeType === 'image' ? 'image/png' : 'audio/wav' });
+      } else if (activeType === 'image') {
+        const targetFile = mediaFile || new File(['sample_payload'], 'suspicious_id.png', { type: 'image/png' });
         const res = await analyzeImage(targetFile);
-        if (activeType === 'audio') {
-          res.threat_type = 'deepfake_audio';
-          res.mitre_name = 'Voice Cloning / Audio Impersonation';
-        }
         setResult(res);
-      } else if (activeType === 'login') {
-        const res = await analyzeLoginLog(userIdInput);
+      } else if (activeType === 'audio') {
+        const targetFile = mediaFile || new File(['sample_payload'], 'voice_clone.wav', { type: 'audio/wav' });
+        const res = await analyzeAudio(targetFile);
         setResult(res);
       }
     } catch (err) {
@@ -73,7 +61,7 @@ export const ThreatScanner: React.FC = () => {
     { id: 'email', label: 'Email / Message', icon: Mail },
     { id: 'image', label: 'Image / Face', icon: ImageIcon },
     { id: 'audio', label: 'Audio / Voice', icon: Mic },
-    { id: 'login', label: 'Login Logs', icon: FileText },
+
   ];
 
   const authenticityScore = result?.features?.authenticity_score ?? (result ? Math.max(0, 100 - result.risk_score) : 0);
@@ -95,7 +83,7 @@ export const ThreatScanner: React.FC = () => {
               </span>
             </h1>
             <p className="text-xs text-slate-400 font-mono">
-              Unified Ingestion for URL, Message, Biometric Media, and Authentication Streams
+              Unified Ingestion for URL, Message, and Biometric Media Streams
             </p>
           </div>
         </div>
@@ -210,19 +198,7 @@ export const ThreatScanner: React.FC = () => {
             </div>
           )}
 
-          {activeType === 'login' && (
-            <div>
-              <label className="block text-xs font-mono text-slate-300 uppercase mb-2">
-                User Subject Identifier
-              </label>
-              <input
-                type="text"
-                value={userIdInput}
-                onChange={(e) => setUserIdInput(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-slate-900 border border-slate-700 font-mono text-xs text-white focus:border-cyan-500 outline-none"
-              />
-            </div>
-          )}
+
 
           <div className="flex justify-end pt-2">
             <button

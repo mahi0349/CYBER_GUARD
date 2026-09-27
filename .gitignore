@@ -31,11 +31,19 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+
+# Secrets and Environment Variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+.env*.local
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+
 
 # ML models (small trained models included for zero-setup deployment)
 # ml/models/*.joblib
@@ -48,3 +56,12 @@ dist-ssr/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Documentation (kept locally only)
+docs/
+*.doc
+*.docx
+
+# Local startup scripts
+*.bat
+start_cyberguard.bat

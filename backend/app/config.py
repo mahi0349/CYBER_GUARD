@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
     
+    # Threat Intelligence APIs (free tier)
+    GOOGLE_SAFE_BROWSING_API_KEY: str = ""
+    
     # Risk policy thresholds
     RISK_THRESHOLD_LOW: int = 20
     RISK_THRESHOLD_MEDIUM: int = 40

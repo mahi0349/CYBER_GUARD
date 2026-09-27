@@ -1,13 +1,18 @@
 import re
 import math
 import os
+import logging
 from typing import Dict, Any, List, Tuple
 from urllib.parse import urlparse
 import joblib
+import httpx
 
 from app.schemas.analysis import EvidenceItem, AnalysisResponse
 from app.services.risk_engine import risk_engine
 from app.services.explanation_engine import explanation_engine
+from app.config import settings
+
+logger = logging.getLogger("cyberguard.phishing")
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../../ml/models/phishing_model.joblib")
 
@@ -21,6 +26,7 @@ class PhishingService:
     def __init__(self):
         self.model = None
         self._load_model()
+        self.safe_browsing_key = settings.GOOGLE_SAFE_BROWSING_API_KEY or os.environ.get("GOOGLE_SAFE_BROWSING_API_KEY", "")
 
     def _load_model(self):
         if os.path.exists(MODEL_PATH):
@@ -28,6 +34,70 @@ class PhishingService:
                 self.model = joblib.load(MODEL_PATH)
             except Exception:
                 self.model = None
+
+    # ── Google Safe Browsing API v4 (free: 10,000 req/day) ──────────────
+    def _check_safe_browsing(self, url: str) -> Tuple[bool, str]:
+        """
+        Query Google Safe Browsing API for real-time threat match.
+        Returns (is_flagged: bool, threat_type: str).
+        """
+        if not self.safe_browsing_key:
+            return False, ""
+        try:
+            payload = {
+                "client": {"clientId": "cyberguard", "clientVersion": "1.0.0"},
+                "threatInfo": {
+                    "threatTypes": [
+                        "MALWARE", "SOCIAL_ENGINEERING",
+                        "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"
+                    ],
+                    "platformTypes": ["ANY_PLATFORM"],
+                    "threatEntryTypes": ["URL"],
+                    "threatEntries": [{"url": url}]
+                }
+            }
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.post(
+                    f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={self.safe_browsing_key}",
+                    json=payload
+                )
+                data = resp.json()
+                matches = data.get("matches", [])
+                if matches:
+                    threat_type = matches[0].get("threatType", "UNKNOWN")
+                    logger.info(f"Google Safe Browsing MATCH: {url} → {threat_type}")
+                    return True, threat_type
+        except Exception as e:
+            logger.warning(f"Google Safe Browsing lookup failed: {e}")
+        return False, ""
+
+    # ── WHOIS Domain Age Check (free, unlimited) ────────────────────────
+    def _check_domain_age(self, hostname: str) -> Tuple[int, str]:
+        """
+        Query WHOIS for domain creation date. Returns (age_days, registrar).
+        New domains (< 30 days) are highly suspicious for phishing.
+        """
+        try:
+            import whois
+            from datetime import datetime
+            # Strip subdomains to get the registerable domain
+            parts = hostname.split(".")
+            if len(parts) > 2:
+                domain = ".".join(parts[-2:])
+            else:
+                domain = hostname
+
+            w = whois.whois(domain)
+            creation_date = w.creation_date
+            if isinstance(creation_date, list):
+                creation_date = creation_date[0]
+            if creation_date:
+                age_days = (datetime.utcnow() - creation_date).days
+                registrar = str(w.registrar or "Unknown")
+                return age_days, registrar
+        except Exception as e:
+            logger.debug(f"WHOIS lookup failed for {hostname}: {e}")
+        return -1, ""
 
     def calculate_entropy(self, text: str) -> float:
         if not text:
@@ -108,6 +178,47 @@ class PhishingService:
                 weight=10
             ))
 
+        # ── NEW: Google Safe Browsing live threat match ──────────────────
+        sb_flagged, sb_threat = self._check_safe_browsing(url)
+        if sb_flagged:
+            threat_label = sb_threat.replace("_", " ").title()
+            evidence.append(EvidenceItem(
+                indicator="google_safe_browsing_match",
+                description=f"Google Safe Browsing API confirmed active threat: {threat_label}",
+                weight=25
+            ))
+        elif self.safe_browsing_key:
+            # API was called successfully but URL is clean
+            evidence.append(EvidenceItem(
+                indicator="safe_browsing_clean",
+                description="Google Safe Browsing API returned no active threat matches",
+                weight=0
+            ))
+
+        # ── NEW: WHOIS domain age intelligence ───────────────────────────
+        domain_age_days = -1
+        if hostname and not has_ip:
+            domain_age_days, registrar = self._check_domain_age(hostname)
+            if domain_age_days >= 0:
+                if domain_age_days < 30:
+                    evidence.append(EvidenceItem(
+                        indicator="newly_registered_domain",
+                        description=f"Domain registered only {domain_age_days} days ago (Registrar: {registrar}). Over 80% of phishing domains are under 30 days old.",
+                        weight=16
+                    ))
+                elif domain_age_days < 90:
+                    evidence.append(EvidenceItem(
+                        indicator="young_domain_registration",
+                        description=f"Domain registered {domain_age_days} days ago (Registrar: {registrar}). Relatively new.",
+                        weight=6
+                    ))
+                else:
+                    evidence.append(EvidenceItem(
+                        indicator="established_domain_age",
+                        description=f"Domain has been registered for {domain_age_days} days ({domain_age_days // 365} years). Established domain.",
+                        weight=0
+                    ))
+
         features = {
             "url_length": url_len,
             "domain_length": domain_len,
@@ -120,7 +231,9 @@ class PhishingService:
             "digit_count": digit_count,
             "special_character_count": special_char_count,
             "suspicious_keywords_count": has_suspicious_keyword,
-            "entropy": entropy
+            "entropy": entropy,
+            "safe_browsing_flagged": sb_flagged,
+            "domain_age_days": domain_age_days
         }
 
         return features, evidence
@@ -132,7 +245,14 @@ class PhishingService:
         if self.model is not None:
             # Model inference when trained
             try:
-                feature_vals = [list(features.values())]
+                # Use only the original 12 features for the trained model
+                model_feature_keys = [
+                    "url_length", "domain_length", "has_ip", "has_https",
+                    "has_at_symbol", "has_double_slash", "subdomain_count",
+                    "hyphen_count", "digit_count", "special_character_count",
+                    "suspicious_keywords_count", "entropy"
+                ]
+                feature_vals = [[features[k] for k in model_feature_keys]]
                 proba = float(self.model.predict_proba(feature_vals)[0][1])
             except Exception:
                 proba = self._heuristic_probability(features, evidence)

@@ -17,6 +17,8 @@ from app.schemas.analysis import (
 from app.services.phishing_service import phishing_service
 from app.services.deepfake_service import deepfake_service
 from app.services.behavior_service import behavior_service
+from app.services.email_analyzer import email_analyzer
+from app.services.audio_forensics import audio_forensics_service
 
 router = APIRouter(prefix="/analyze", tags=["Threat Analysis Engine"])
 
@@ -121,24 +123,12 @@ def analyze_url(req: URLAnalysisRequest, db: Session = Depends(get_db)):
 
 @router.post("/email", response_model=AnalysisResponse)
 def analyze_email(req: EmailAnalysisRequest, db: Session = Depends(get_db)):
-    # For email, synthesize URL and subject analysis
-    target_text = f"{req.subject} | {req.sender} | {req.body}"
-    # Extract any links or use sender domain
-    dummy_url = f"https://{req.sender.split('@')[-1] if '@' in req.sender else 'unknown-domain.com'}/auth"
-    result = phishing_service.analyze_url(dummy_url)
-    
-    # Enrich with email body keywords
-    body_lower = req.body.lower()
-    if any(w in body_lower for w in ["urgent", "immediately", "suspend", "action required", "within 24 hours"]):
-        result.risk_score = min(100, result.risk_score + 10)
-        result.severity = "CRITICAL" if result.risk_score >= 80 else "HIGH"
-        result.evidence.append(
-            from_evidence := type(result.evidence[0])(
-                indicator="urgency_coercion_language",
-                description="Social engineering urgency language coercing immediate action detected in body",
-                weight=12
-            )
-        )
+    # Use the new real email forensic analyzer with SPF/DMARC/MX + NLP
+    result = email_analyzer.analyze_email(
+        sender=req.sender,
+        subject=req.subject,
+        body=req.body
+    )
     
     threat_id, inc_id = _persist_threat_and_incident(
         db=db,
@@ -173,9 +163,11 @@ async def analyze_audio(
     db: Session = Depends(get_db)
 ):
     contents = await file.read()
-    result = deepfake_service.analyze_image(filename=file.filename or "audio_recording.wav", file_bytes=contents)
-    result.threat_type = "deepfake_audio"
-    result.mitre_name = "Voice Cloning / Audio Impersonation"
+    # Use the real audio forensics service (librosa-based spectral analysis)
+    result = audio_forensics_service.analyze_audio(
+        filename=file.filename or "audio_recording.wav",
+        file_bytes=contents
+    )
     threat_id, inc_id = _persist_threat_and_incident(
         db=db,
         analysis=result,

@@ -12,4 +12,14 @@ httpx>=0.27.0
 python-multipart>=0.0.9
 google-genai>=0.1.1
 Pillow>=10.2.0
+python-whois>=0.9.4
+dnspython>=2.6.0
+librosa>=0.10.0
+soundfile>=0.12.0
 pytest>=8.0.0
+
+# Optional: Neural deepfake detection with EfficientNet-B0 (local dev only)
+# Uncomment below for local GPU/CPU inference (too heavy for Render free tier)
+# torch>=2.0.0
+# torchvision>=0.15.0
+# timm>=0.9.0
