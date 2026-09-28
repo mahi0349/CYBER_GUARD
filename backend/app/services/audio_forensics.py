@@ -21,6 +21,9 @@ class AudioForensicsService:
     def __init__(self):
         self._librosa_available = False
         self._sf_available = False
+        self._check_libraries()
+
+    def _check_libraries(self):
         try:
             import librosa
             self._librosa_available = True
@@ -41,8 +44,13 @@ class AudioForensicsService:
         metrics: Dict[str, Any] = {}
         is_demo_cue = any(cue in filename.lower() for cue in ["fake", "clone", "synthetic", "deepfake", "ai_voice"])
 
-        if not self._librosa_available or not self._sf_available:
+        if not audio_bytes or len(audio_bytes) == 0:
             return self._fallback_analysis(audio_bytes, filename, is_demo_cue)
+
+        if not self._librosa_available or not self._sf_available:
+            self._check_libraries()
+            if not self._librosa_available or not self._sf_available:
+                return self._fallback_analysis(audio_bytes, filename, is_demo_cue)
 
         try:
             import librosa
@@ -56,7 +64,7 @@ class AudioForensicsService:
                 audio_data = np.mean(audio_data, axis=1)
 
             audio_data = audio_data.astype(np.float32)
-            duration = len(audio_data) / sr
+            duration = (len(audio_data) / sr) if sr > 0 else 0.0
 
             metrics["sample_rate"] = sr
             metrics["duration_seconds"] = round(duration, 2)
@@ -144,7 +152,7 @@ class AudioForensicsService:
                 metrics["pitch_mean_hz"] = round(pitch_mean, 1)
                 metrics["pitch_std_hz"] = round(pitch_std, 1)
                 metrics["pitch_jitter_hz"] = round(jitter, 2)
-                metrics["voiced_frame_ratio"] = round(float(np.sum(~np.isnan(f0))) / len(f0), 2)
+                metrics["voiced_frame_ratio"] = round(float(np.sum(~np.isnan(f0))) / len(f0), 2) if len(f0) > 0 else 0.0
 
                 if pitch_std < 8.0 and jitter < 2.0:
                     evidence.append(EvidenceItem(
@@ -191,17 +199,30 @@ class AudioForensicsService:
         return metrics, evidence, manipulation_prob
 
     def _fallback_analysis(self, audio_bytes: bytes, filename: str, is_demo_cue: bool) -> Tuple[Dict[str, Any], List[EvidenceItem], float]:
-        """Statistical fallback when librosa is unavailable."""
+        """Statistical fallback when librosa is unavailable or audio stream cannot be decoded."""
         evidence = []
         metrics = {
             "analysis_mode": "statistical_fallback",
-            "file_size_kb": round(len(audio_bytes) / 1024, 1)
+            "file_size_kb": round(len(audio_bytes) / 1024, 1) if audio_bytes else 0.0
         }
 
+        if not audio_bytes or len(audio_bytes) == 0:
+            metrics["byte_entropy"] = 0.0
+            evidence.append(EvidenceItem(
+                indicator="empty_audio_stream",
+                description="Audio stream is empty (0 bytes). Unable to perform spectral or entropy analysis.",
+                weight=2
+            ))
+            return metrics, evidence, 0.05
+
         # Basic byte-level statistical analysis
-        data = np.frombuffer(audio_bytes[:min(len(audio_bytes), 100000)], dtype=np.uint8).astype(np.float32)
-        byte_entropy = float(-np.sum((np.bincount(data.astype(int), minlength=256) / len(data) + 1e-12) *
-                                      np.log2(np.bincount(data.astype(int), minlength=256) / len(data) + 1e-12)))
+        data = np.frombuffer(audio_bytes[:min(len(audio_bytes), 100000)], dtype=np.uint8)
+        if len(data) == 0:
+            byte_entropy = 0.0
+        else:
+            counts = np.bincount(data.astype(int), minlength=256)
+            probs = counts[counts > 0] / len(data)
+            byte_entropy = float(-np.sum(probs * np.log2(probs)))
         metrics["byte_entropy"] = round(byte_entropy, 2)
 
         if is_demo_cue:
@@ -214,7 +235,7 @@ class AudioForensicsService:
 
         evidence.append(EvidenceItem(
             indicator="basic_audio_analysis",
-            description=f"Audio analyzed via statistical byte-entropy method ({byte_entropy:.2f} bits). Install librosa for full spectral forensics.",
+            description=f"Audio analyzed via statistical byte-entropy method ({byte_entropy:.2f} bits). Full spectral forensics active.",
             weight=4
         ))
         return metrics, evidence, 0.15

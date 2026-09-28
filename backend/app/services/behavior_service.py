@@ -24,9 +24,33 @@ class BehaviorService:
     def analyze_events(self, events: List[Dict[str, Any]], user_id: str = "U1003") -> AnalysisResponse:
         evidence: List[EvidenceItem] = []
         
+        # Helper to safely parse failed attempts count
+        def _parse_failed_attempts(val: Any) -> int:
+            try:
+                if val is None or str(val).strip() == "":
+                    return 0
+                return int(val)
+            except (ValueError, TypeError):
+                return 0
+
+        # Helper to check if event was a failed attempt (supports bool, int, and CSV strings)
+        def _is_failed_attempt(e: Dict[str, Any]) -> bool:
+            s_val = e.get("success")
+            if s_val is not None:
+                if isinstance(s_val, bool):
+                    if not s_val:
+                        return True
+                elif isinstance(s_val, (int, float)):
+                    if s_val == 0:
+                        return True
+                elif isinstance(s_val, str):
+                    if s_val.strip().lower() in ("0", "false", "f", "no", "n", "failed"):
+                        return True
+            return _parse_failed_attempts(e.get("failed_attempts")) > 0
+
         # Aggregate heuristics across events
-        failed_count = sum(1 for e in events if not e.get("success", True) or int(e.get("failed_attempts", 0)) > 0)
-        max_failed_burst = max([int(e.get("failed_attempts", 0)) for e in events] + [0])
+        failed_count = sum(1 for e in events if _is_failed_attempt(e))
+        max_failed_burst = max([_parse_failed_attempts(e.get("failed_attempts")) for e in events] + [0])
         
         locations = list(set(str(e.get("location", "")) for e in events if e.get("location")))
         devices = list(set(str(e.get("device", "")) for e in events if e.get("device")))
@@ -75,10 +99,11 @@ class BehaviorService:
         # Heuristic 5: Off-hours authentication (between 01:00 and 05:00)
         has_night_login = False
         for e in events:
-            ts_str = str(e.get("timestamp") or e.get("login_time", ""))
+            ts_str = str(e.get("timestamp") or e.get("login_time", "")).strip()
             if ts_str:
                 try:
-                    dt = datetime.fromisoformat(ts_str.replace("Z", ""))
+                    clean_ts = ts_str.replace("Z", "+00:00")
+                    dt = datetime.fromisoformat(clean_ts)
                     if 1 <= dt.hour <= 5:
                         has_night_login = True
                         break

@@ -79,7 +79,7 @@ class PhishingService:
         """
         try:
             import whois
-            from datetime import datetime
+            from datetime import datetime, timezone
             # Strip subdomains to get the registerable domain
             parts = hostname.split(".")
             if len(parts) > 2:
@@ -89,10 +89,21 @@ class PhishingService:
 
             w = whois.whois(domain)
             creation_date = w.creation_date
-            if isinstance(creation_date, list):
+            if isinstance(creation_date, list) and creation_date:
                 creation_date = creation_date[0]
-            if creation_date:
-                age_days = (datetime.utcnow() - creation_date).days
+            if isinstance(creation_date, str):
+                try:
+                    from dateutil.parser import parse
+                    creation_date = parse(creation_date)
+                except Exception:
+                    creation_date = None
+
+            if isinstance(creation_date, datetime):
+                if creation_date.tzinfo is not None:
+                    now = datetime.now(timezone.utc)
+                else:
+                    now = datetime.now()
+                age_days = max(0, (now - creation_date).days)
                 registrar = str(w.registrar or "Unknown")
                 return age_days, registrar
         except Exception as e:

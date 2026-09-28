@@ -20,12 +20,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("cyberguard.main")
 
-# Ensure tables and seed data are ready
-try:
-    Base.metadata.create_all(bind=engine)
-    seed_database()
-except Exception as e:
-    logger.warning(f"Immediate DB init: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

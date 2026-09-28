@@ -1,6 +1,4 @@
 import io
-import os
-import hashlib
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
@@ -23,9 +21,9 @@ def _init_neural_classifier():
     """Try to load EfficientNet-B0 via timm + torch. Returns None on failure."""
     global _neural_classifier
     try:
-        import torch
-        import timm
-        from torchvision import transforms
+        import torch  # type: ignore
+        import timm  # type: ignore
+        from torchvision import transforms  # type: ignore
 
         model = timm.create_model("efficientnet_b0", pretrained=True, num_classes=0)
         model.eval()
@@ -210,9 +208,12 @@ class DeepfakeService:
             high_freq_mask = dist_from_center > (min(cy, cx) * 0.3)
             high_mag = mag[high_freq_mask]
             
-            mean_high = float(np.mean(high_mag)) + 1e-6
-            max_high = float(np.max(high_mag))
-            fft_peak_ratio = round(float(max_high / mean_high), 2)
+            if len(high_mag) > 0:
+                mean_high = float(np.mean(high_mag)) + 1e-6
+                max_high = float(np.max(high_mag))
+                fft_peak_ratio = round(float(max_high / mean_high), 2)
+            else:
+                fft_peak_ratio = 4.5
             metrics["fft_spectral_peak_ratio"] = fft_peak_ratio
 
             # Neural upsampling (GAN/diffusion transposed convolutions) generates periodic lattice peaks

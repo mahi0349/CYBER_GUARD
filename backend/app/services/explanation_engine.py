@@ -21,7 +21,8 @@ class ExplanationEngine:
         if self.api_key:
             try:
                 from google import genai
-                self.client = genai.Client(api_key=self.api_key)
+                # Configure 6-second timeout so API calls never hang FastAPI worker threads
+                self.client = genai.Client(api_key=self.api_key, http_options={"timeout": 6000})
                 logger.info("Gemini AI Client initialized successfully for Threat Explanations.")
             except Exception as e:
                 logger.warning(f"Could not initialize Gemini Client: {e}")
@@ -37,6 +38,7 @@ class ExplanationEngine:
         # Try Gemini if client is ready
         if self.client:
             try:
+                from google.genai import types
                 prompt = f"""You are a Lead Tier-3 SOC Analyst at CYBERGUARD.
 Provide a concise, authoritative 2-3 sentence threat explanation for an analyst dashboard.
 
@@ -54,14 +56,20 @@ Explain:
 
 Keep the response strictly factual, direct, and under 90 words without markdown headers."""
 
+                # Disable AFC to prevent AFC warnings and unnecessary roundtrips
+                gen_config = types.GenerateContentConfig(
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)
+                )
+
                 response = self.client.models.generate_content(
                     model=self.model_name,
-                    contents=prompt
+                    contents=prompt,
+                    config=gen_config
                 )
                 if response and response.text:
                     return response.text.strip()
             except Exception as e:
-                logger.warning(f"Gemini API generation failed ({e}), falling back to deterministic explanation.")
+                logger.warning(f"Gemini AI explanation unavailable ({e}), using deterministic explanation.")
 
         # Fallback SOC Template Engine
         return self._generate_fallback(threat_type, risk_score, severity, evidence, target_reference)

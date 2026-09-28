@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional, Any, Dict
 from datetime import datetime
 
@@ -9,8 +9,7 @@ class ThreatEvidenceOut(BaseModel):
     weight: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ThreatOut(BaseModel):
     id: int
@@ -25,8 +24,7 @@ class ThreatOut(BaseModel):
     created_at: datetime
     evidence: List[ThreatEvidenceOut] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class IncidentOut(BaseModel):
     id: int
@@ -41,8 +39,7 @@ class IncidentOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ActionExecutionRequest(BaseModel):
     action_type: str  # block_url, revoke_session, require_mfa, block_ip, quarantine_message
