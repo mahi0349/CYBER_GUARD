@@ -46,14 +46,17 @@ def get_db():
         db.close()
 
 def is_postgres_port_open(host: str = "localhost", port: int = 5432) -> bool:
-    """Fast check if PostgreSQL port is open and listening."""
+    """Fast check if PostgreSQL port is open and listening (IPv4/IPv6 dual stack compatible)."""
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(0.6)
-            res = sock.connect_ex((host, port))
-            return res == 0
+        with socket.create_connection((host, port), timeout=1.5):
+            return True
     except Exception:
-        return False
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=1.5):
+                return True
+        except Exception:
+            return False
+
 
 def mask_connection_url(url: str) -> str:
     """Sanitize passwords in connection strings."""
