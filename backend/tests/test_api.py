@@ -104,3 +104,46 @@ def test_deepfake_image_analysis():
     assert res.threat_type == "deepfake"
     assert "fft_spectral_peak_ratio" in res.features
     assert "noise_residual_std" in res.features
+
+
+def test_policy_api_persistence():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.config import settings
+
+    with TestClient(app) as client:
+        # 1. Fetch current policy
+        res = client.get("/api/v1/settings/policy")
+        assert res.status_code == 200
+        data = res.json()
+        assert "low_threshold" in data
+        assert "database" in data
+
+        # 2. Update policy
+        put_res = client.put("/api/v1/settings/policy", json={
+            "low_threshold": 18,
+            "medium_threshold": 38,
+            "high_threshold": 58,
+            "critical_threshold": 78
+        })
+        assert put_res.status_code == 200
+        assert put_res.json()["low_threshold"] == 18
+        assert settings.RISK_THRESHOLD_LOW == 18
+
+        # 3. Verify order validation (must fail if low >= med)
+        bad_res = client.put("/api/v1/settings/policy", json={
+            "low_threshold": 50,
+            "medium_threshold": 30,
+            "high_threshold": 60,
+            "critical_threshold": 80
+        })
+        assert bad_res.status_code == 400
+
+        # Reset back to defaults
+        client.put("/api/v1/settings/policy", json={
+            "low_threshold": 20,
+            "medium_threshold": 40,
+            "high_threshold": 60,
+            "critical_threshold": 80
+        })
+

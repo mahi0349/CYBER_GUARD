@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AnalysisResponse, DashboardStats, Threat, Incident } from '../types';
+import { AnalysisResponse, DashboardStats, Threat, Incident, PolicyConfig, DatabaseStatus } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -328,3 +328,109 @@ export const analyzeAudio = async (file: File): Promise<AnalysisResponse> => {
     };
   }
 };
+
+const POLICY_STORAGE_KEY = 'cyberguard_risk_policy';
+
+export const getActivePolicyThresholds = (): PolicyConfig => {
+  try {
+    const raw = localStorage.getItem(POLICY_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.low_threshold !== undefined) return parsed;
+    }
+  } catch (e) {
+    console.warn('Could not parse cached risk policy', e);
+  }
+  return {
+    low_threshold: 20,
+    medium_threshold: 40,
+    high_threshold: 60,
+    critical_threshold: 80,
+    gemini_model: 'gemini-3.8-flash'
+  };
+};
+
+export const classifySeverity = (score: number): 'SAFE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' => {
+  const policy = getActivePolicyThresholds();
+  if (score >= policy.critical_threshold) return 'CRITICAL';
+  if (score >= policy.high_threshold) return 'HIGH';
+  if (score >= policy.medium_threshold) return 'MEDIUM';
+  if (score >= policy.low_threshold) return 'LOW';
+  return 'SAFE';
+};
+
+
+export const fetchRiskPolicy = async (): Promise<{ policy: PolicyConfig; database?: DatabaseStatus }> => {
+  try {
+    const res = await apiClient.get<PolicyConfig & { database?: DatabaseStatus }>('/settings/policy');
+    const { database, ...policy } = res.data;
+    localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(policy));
+    return { policy, database };
+  } catch (err) {
+    console.warn('Backend unavailable, loading cached/default risk policy:', err);
+    return {
+      policy: getActivePolicyThresholds(),
+      database: {
+        configured_driver: 'sqlite',
+        active_driver: 'sqlite',
+        active_url: 'sqlite:///./cyberguard.db (Offline mode)',
+        status: 'local_fallback',
+        is_postgres: false,
+        postgres_container_running: false,
+        fallback_in_use: true,
+        counts: {
+          threats: 57,
+          incidents: 40,
+          scans: 54,
+          users: 1
+        }
+      }
+    };
+  }
+};
+
+export const updateRiskPolicy = async (payload: {
+  low_threshold: number;
+  medium_threshold: number;
+  high_threshold: number;
+  critical_threshold: number;
+  gemini_model?: string;
+}): Promise<{ policy: PolicyConfig; database?: DatabaseStatus }> => {
+  // Always update client cache immediately
+  localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(payload));
+  try {
+    const res = await apiClient.put<PolicyConfig & { database?: DatabaseStatus }>('/settings/policy', payload);
+    const { database, ...policy } = res.data;
+    localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(policy));
+    return { policy, database };
+  } catch (err) {
+    console.warn('Backend unavailable, policy saved in browser client storage:', err);
+    return {
+      policy: payload,
+    };
+  }
+};
+
+export const fetchDatabaseStatus = async (): Promise<DatabaseStatus> => {
+  try {
+    const res = await apiClient.get<DatabaseStatus>('/settings/db-status');
+    return res.data;
+  } catch (err) {
+    return {
+      configured_driver: 'sqlite',
+      active_driver: 'sqlite',
+      active_url: 'sqlite:///./cyberguard.db',
+      status: 'offline',
+      is_postgres: false,
+      postgres_container_running: false,
+      fallback_in_use: true,
+      counts: { threats: 57, incidents: 40, scans: 54, users: 1 }
+    };
+  }
+};
+
+export const reconnectDatabase = async (): Promise<{ success: boolean; message: string; status: DatabaseStatus }> => {
+  const res = await apiClient.post('/settings/db-reconnect');
+  return res.data;
+};
+

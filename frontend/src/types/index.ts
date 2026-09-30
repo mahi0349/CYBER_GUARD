@@ -71,3 +71,29 @@ export interface DashboardStats {
   recent_threats: Threat[];
   recent_incidents: Incident[];
 }
+
+export interface PolicyConfig {
+  low_threshold: number;
+  medium_threshold: number;
+  high_threshold: number;
+  critical_threshold: number;
+  gemini_model?: string;
+  updated_at?: string;
+}
+
+export interface DatabaseStatus {
+  configured_driver: string;
+  active_driver: string;
+  active_url: string;
+  status: string;
+  is_postgres: boolean;
+  postgres_container_running: boolean;
+  fallback_in_use: boolean;
+  counts: {
+    threats: number;
+    incidents: number;
+    scans: number;
+    users: number;
+  };
+}
+

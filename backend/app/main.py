@@ -13,6 +13,7 @@ from app.api.dashboard import router as dashboard_router
 from app.api.threats import router as threats_router
 from app.api.incidents import router as incidents_router
 from app.api.analyze import router as analyze_router
+from app.api.settings import router as settings_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,6 +29,22 @@ async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
         seed_database()
+        
+        # Synchronize risk policy thresholds from persistent storage
+        from app.models.database import SessionLocal
+        from app.models.settings import SystemPolicy
+        with SessionLocal() as db:
+            policy = db.query(SystemPolicy).first()
+            if policy:
+                settings.RISK_THRESHOLD_LOW = policy.low_threshold
+                settings.RISK_THRESHOLD_MEDIUM = policy.medium_threshold
+                settings.RISK_THRESHOLD_HIGH = policy.high_threshold
+                settings.RISK_THRESHOLD_CRITICAL = policy.critical_threshold
+                logger.info(
+                    f"Synchronized Risk Engine policy thresholds: "
+                    f"Low={policy.low_threshold}, Med={policy.medium_threshold}, "
+                    f"High={policy.high_threshold}, Crit={policy.critical_threshold}"
+                )
         logger.info("Database schemas and seed data verified.")
     except Exception as e:
         logger.error(f"Error during database initialization: {e}")
@@ -58,6 +75,8 @@ app.include_router(dashboard_router, prefix=api_prefix)
 app.include_router(threats_router, prefix=api_prefix)
 app.include_router(incidents_router, prefix=api_prefix)
 app.include_router(analyze_router, prefix=api_prefix)
+app.include_router(settings_router, prefix=api_prefix)
+
 
 @app.get("/health", tags=["Health"])
 def health_check():
