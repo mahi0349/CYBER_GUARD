@@ -7,7 +7,7 @@ from app.models.threat import Threat
 
 class ResponseEngine:
     """
-    CYBERGUARD Response & Automated Containment Engine.
+    QuantumVault Response & Automated Containment Engine.
     Executes safe simulated response playbooks for SOC containment:
     - URL quarantine
     - Session revocation & MFA enforcement
@@ -47,7 +47,7 @@ class ResponseEngine:
             action_type=action_type,
             description=desc,
             status="SIMULATED_SUCCESS",
-            executed_by="CYBERGUARD Automated Orchestrator",
+            executed_by="QuantumVault Automated Orchestrator",
             created_at=datetime.utcnow()
         )
         db.add(action_record)

@@ -7,7 +7,7 @@ from app.models.database import get_db, get_database_status, try_connect_postgre
 from app.models.settings import SystemPolicy
 from app.schemas.settings import PolicyUpdateRequest, PolicyResponse, DatabaseStatusResponse
 
-logger = logging.getLogger("cyberguard.api.settings")
+logger = logging.getLogger("quantumvault.api.settings")
 router = APIRouter(prefix="/settings", tags=["Risk Policy & Platform Settings"])
 
 def get_or_create_policy(db: Session) -> SystemPolicy:

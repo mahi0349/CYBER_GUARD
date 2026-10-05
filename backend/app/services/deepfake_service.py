@@ -8,7 +8,7 @@ from app.schemas.analysis import EvidenceItem, AnalysisResponse
 from app.services.risk_engine import risk_engine
 from app.services.explanation_engine import explanation_engine
 
-logger = logging.getLogger("cyberguard.deepfake")
+logger = logging.getLogger("quantumvault.deepfake")
 
 # ── EfficientNet-B0 Neural Classifier (optional, for local GPU/CPU) ─────
 # Uses pretrained ImageNet EfficientNet-B0 as a feature extractor with
@@ -51,7 +51,7 @@ _init_neural_classifier()
 
 class DeepfakeService:
     """
-    CYBERGUARD Deepfake & Synthetic Media Forensic Assessment Service.
+    QuantumVault Deepfake & Synthetic Media Forensic Assessment Service.
 
     Multi-layer analysis pipeline:
       1. EXIF Camera Sensor Provenance Check

@@ -1,1 +1,1 @@
-# CYBERGUARD backend tests
+# QuantumVault backend tests

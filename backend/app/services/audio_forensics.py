@@ -7,12 +7,12 @@ from app.schemas.analysis import EvidenceItem, AnalysisResponse
 from app.services.risk_engine import risk_engine
 from app.services.explanation_engine import explanation_engine
 
-logger = logging.getLogger("cyberguard.audio")
+logger = logging.getLogger("quantumvault.audio")
 
 
 class AudioForensicsService:
     """
-    CYBERGUARD Audio Deepfake / Voice Clone Forensic Analyzer.
+    QuantumVault Audio Deepfake / Voice Clone Forensic Analyzer.
     Performs mel-spectrogram analysis, spectral flatness measurement,
     zero-crossing rate inspection, and pitch stability assessment
     to detect AI-generated or cloned voice audio.

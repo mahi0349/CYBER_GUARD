@@ -14,12 +14,12 @@ def seed_database():
             print("Database already contains records. Skipping seed.")
             return
 
-        print("Seeding initial CYBERGUARD threat intelligence data...")
+        print("Seeding initial QuantumVault threat intelligence data...")
 
         # 1. Users
         analyst = User(
             name="SOC Lead Analyst",
-            email="analyst@cyberguard.internal",
+            email="analyst@quantumvault.internal",
             password_hash="argon2_demo_hash_92813",
             role="lead_analyst"
         )
@@ -86,7 +86,7 @@ def seed_database():
         # 3. Incidents
         inc1 = Incident(
             threat_id=t1.id,
-            incident_code="CG-1021",
+            incident_code="QV-1021",
             title="Credential Phishing Campaign — Banking Lookalike",
             description=t1.explanation,
             severity="CRITICAL",
@@ -98,7 +98,7 @@ def seed_database():
 
         inc2 = Incident(
             threat_id=t2.id,
-            incident_code="CG-1022",
+            incident_code="QV-1022",
             title="Account Takeover — Credential Stuffing Anomaly",
             description=t2.explanation,
             severity="CRITICAL",
@@ -110,7 +110,7 @@ def seed_database():
 
         inc3 = Incident(
             threat_id=t3.id,
-            incident_code="CG-1023",
+            incident_code="QV-1023",
             title="Executive Biometric Impersonation Probe",
             description=t3.explanation,
             severity="HIGH",

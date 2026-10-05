@@ -8,7 +8,7 @@ class Incident(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     threat_id = Column(Integer, ForeignKey("threats.id"), nullable=True)
-    incident_code = Column(String(50), unique=True, index=True, nullable=False) # e.g. CG-1021
+    incident_code = Column(String(50), unique=True, index=True, nullable=False) # e.g. QV-1021
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=False)
     severity = Column(String(20), nullable=False)     # CRITICAL, HIGH, MEDIUM, LOW

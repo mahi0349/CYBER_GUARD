@@ -7,7 +7,7 @@ from app.schemas.analysis import EvidenceItem, AnalysisResponse
 from app.services.risk_engine import risk_engine
 from app.services.explanation_engine import explanation_engine
 
-logger = logging.getLogger("cyberguard.email")
+logger = logging.getLogger("quantumvault.email")
 
 # Social engineering urgency patterns
 URGENCY_PATTERNS = [
@@ -35,7 +35,7 @@ SPOOFED_BRANDS = {
 
 class EmailAnalyzer:
     """
-    CYBERGUARD Email Forensic Analyzer.
+    QuantumVault Email Forensic Analyzer.
     Performs SPF record verification, sender domain reputation heuristics,
     header anomaly detection, and social engineering NLP scoring.
     """

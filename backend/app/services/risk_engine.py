@@ -4,7 +4,7 @@ from app.config import settings
 
 class RiskEngine:
     """
-    CYBERGUARD Deterministic Risk Scoring Engine.
+    QuantumVault Deterministic Risk Scoring Engine.
     
     Formula:
       Risk Score = min(100, max(0, Base ML Confidence Contribution + Sum(Rule Penalty Weights)))

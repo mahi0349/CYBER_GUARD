@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ activeIncidentsCount = 23 }) => 
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-lg tracking-wider text-white">CYBERGUARD</span>
+              <span className="font-mono font-bold text-lg tracking-wider text-white">QuantumVault</span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">AI DEFENSE</span>
             </div>
             <p className="text-[11px] text-slate-400 -mt-0.5 font-mono">SOC Threat Detection & Automated Response</p>

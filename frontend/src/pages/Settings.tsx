@@ -387,7 +387,7 @@ export const Settings: React.FC = () => {
             {saved && (
               <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2 animate-fadeIn">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Thresholds synchronized to CYBERGUARD Risk Engine & persistent database.</span>
+                <span>Thresholds synchronized to QuantumVault Risk Engine & persistent database.</span>
               </div>
             )}
 
@@ -485,7 +485,7 @@ export const Settings: React.FC = () => {
                 </div>
                 <div className="text-xs font-bold text-cyan-300 mt-1.5 flex items-center gap-1.5">
                   <Server className="w-3.5 h-3.5" />
-                  <span>cyberguard_db</span>
+                  <span>quantumvault_db</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1">
                   Volume: <code className="text-slate-300">pgdata</code> (Port 5432)
@@ -509,7 +509,7 @@ export const Settings: React.FC = () => {
                   <span className="uppercase">{dbStatus?.active_driver || 'SQLite'} Engine</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1 truncate" title={dbStatus?.active_url}>
-                  {dbStatus?.active_url || 'cyberguard.db'}
+                  {dbStatus?.active_url || 'quantumvault.db'}
                 </div>
               </div>
             </div>
@@ -586,7 +586,7 @@ export const Settings: React.FC = () => {
                     </li>
                     <li>
                       Click the <span className="text-cyan-400 font-semibold">"Test / Reconnect"</span> button above.
-                      CYBERGUARD will instantly bind to the container without restarting!
+                      QuantumVault will instantly bind to the container without restarting!
                     </li>
                   </ol>
                   <div className="p-2 rounded bg-cyan-950/30 border border-cyan-500/20 text-[10px] text-cyan-300">

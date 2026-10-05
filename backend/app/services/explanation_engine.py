@@ -4,11 +4,11 @@ from typing import List
 from app.schemas.analysis import EvidenceItem
 from app.config import settings
 
-logger = logging.getLogger("cyberguard.explanation")
+logger = logging.getLogger("quantumvault.explanation")
 
 class ExplanationEngine:
     """
-    CYBERGUARD Dual-Mode Explainability Engine.
+    QuantumVault Dual-Mode Explainability Engine.
     Leverages Gemini 3.8 / 2.0 Flash for structured cybersecurity narrative,
     with an intelligent offline fallback when API key is not configured.
     """
@@ -39,7 +39,7 @@ class ExplanationEngine:
         if self.client:
             try:
                 from google.genai import types
-                prompt = f"""You are a Lead Tier-3 SOC Analyst at CYBERGUARD.
+                prompt = f"""You are a Lead Tier-3 SOC Analyst at QuantumVault.
 Provide a concise, authoritative 2-3 sentence threat explanation for an analyst dashboard.
 
 Context:
