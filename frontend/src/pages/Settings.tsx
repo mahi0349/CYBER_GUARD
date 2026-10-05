@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sliders,
   ShieldCheck,
@@ -20,6 +20,7 @@ import {
   fetchRiskPolicy,
   updateRiskPolicy,
   getActivePolicyThresholds,
+  saveActivePolicyThresholdsLocal,
   reconnectDatabase
 } from '../services/api';
 import { DatabaseStatus } from '../types';
@@ -36,6 +37,7 @@ export const Settings: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
+  const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'offline'>('saved');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Database telemetry state
@@ -44,17 +46,49 @@ export const Settings: React.FC = () => {
   const [reconnectResult, setReconnectResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showDockerGuide, setShowDockerGuide] = useState<boolean>(false);
 
+  // Refs for auto-persistence across page navigation
+  const isDirtyRef = useRef<boolean>(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentValuesRef = useRef({
+    low: cachedPolicy.low_threshold,
+    med: cachedPolicy.medium_threshold,
+    high: cachedPolicy.high_threshold,
+    crit: cachedPolicy.critical_threshold,
+    model: cachedPolicy.gemini_model || 'gemini-3.8-flash'
+  });
+
+  // Keep ref synchronized on every render
+  useEffect(() => {
+    currentValuesRef.current = {
+      low: lowThresh,
+      med: medThresh,
+      high: highThresh,
+      crit: critThresh,
+      model: geminiModel
+    };
+  }, [lowThresh, medThresh, highThresh, critThresh, geminiModel]);
+
   // Fetch policy and database diagnostics on mount
   useEffect(() => {
     let isMounted = true;
     fetchRiskPolicy()
       .then((res) => {
         if (!isMounted) return;
-        setLowThresh(res.policy.low_threshold);
-        setMedThresh(res.policy.medium_threshold);
-        setHighThresh(res.policy.high_threshold);
-        setCritThresh(res.policy.critical_threshold);
-        if (res.policy.gemini_model) setGeminiModel(res.policy.gemini_model);
+        // CRUCIAL: Do not overwrite state if user already interacted with sliders on this visit!
+        if (!isDirtyRef.current) {
+          setLowThresh(res.policy.low_threshold);
+          setMedThresh(res.policy.medium_threshold);
+          setHighThresh(res.policy.high_threshold);
+          setCritThresh(res.policy.critical_threshold);
+          if (res.policy.gemini_model) setGeminiModel(res.policy.gemini_model);
+          currentValuesRef.current = {
+            low: res.policy.low_threshold,
+            med: res.policy.medium_threshold,
+            high: res.policy.high_threshold,
+            crit: res.policy.critical_threshold,
+            model: res.policy.gemini_model || 'gemini-3.8-flash'
+          };
+        }
         if (res.database) setDbStatus(res.database);
       })
       .catch((err) => {
@@ -66,39 +100,139 @@ export const Settings: React.FC = () => {
 
     return () => {
       isMounted = false;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      // On unmount (leaving the page), immediately ensure latest values are flushed to localStorage & synced
+      const cur = currentValuesRef.current;
+      saveActivePolicyThresholdsLocal({
+        low_threshold: cur.low,
+        medium_threshold: cur.med,
+        high_threshold: cur.high,
+        critical_threshold: cur.crit,
+        gemini_model: cur.model
+      });
+      if (isDirtyRef.current) {
+        updateRiskPolicy({
+          low_threshold: cur.low,
+          medium_threshold: cur.med,
+          high_threshold: cur.high,
+          critical_threshold: cur.crit,
+          gemini_model: cur.model
+        }).catch(() => {});
+      }
     };
   }, []);
+
+  // Central auto-save and background sync helper
+  const autoSaveAndSync = (
+    low: number,
+    med: number,
+    high: number,
+    crit: number,
+    model: string
+  ) => {
+    isDirtyRef.current = true;
+    currentValuesRef.current = { low, med, high, crit, model };
+
+    // 1. Instantly persist to local storage so leaving the page will NEVER lose values
+    saveActivePolicyThresholdsLocal({
+      low_threshold: low,
+      medium_threshold: med,
+      high_threshold: high,
+      critical_threshold: crit,
+      gemini_model: model
+    });
+
+    setSyncStatus('saving');
+
+    // 2. Debounce background synchronization to persistent database
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      updateRiskPolicy({
+        low_threshold: low,
+        medium_threshold: med,
+        high_threshold: high,
+        critical_threshold: crit,
+        gemini_model: model
+      })
+        .then((res) => {
+          if (res.database) setDbStatus(res.database);
+          setSyncStatus('saved');
+        })
+        .catch(() => {
+          setSyncStatus('offline');
+        });
+    }, 600);
+  };
 
   // Handlers with validation to enforce: Low < Med < High < Crit
   const handleLowChange = (val: number) => {
     const clamped = Math.max(1, Math.min(val, 97));
-    setLowThresh(clamped);
-    if (clamped >= medThresh) setMedThresh(Math.min(clamped + 5, 98));
-    if (clamped >= highThresh) setHighThresh(Math.min(clamped + 10, 99));
-    if (clamped >= critThresh) setCritThresh(Math.min(clamped + 15, 100));
+    const nextLow = clamped;
+    const nextMed = clamped >= medThresh ? Math.min(clamped + 5, 98) : medThresh;
+    const nextHigh = clamped >= highThresh ? Math.min(clamped + 10, 99) : highThresh;
+    const nextCrit = clamped >= critThresh ? Math.min(clamped + 15, 100) : critThresh;
+
+    setLowThresh(nextLow);
+    setMedThresh(nextMed);
+    setHighThresh(nextHigh);
+    setCritThresh(nextCrit);
+    autoSaveAndSync(nextLow, nextMed, nextHigh, nextCrit, geminiModel);
   };
 
   const handleMedChange = (val: number) => {
     const clamped = Math.max(lowThresh + 1, Math.min(val, 98));
-    setMedThresh(clamped);
-    if (clamped >= highThresh) setHighThresh(Math.min(clamped + 5, 99));
-    if (clamped >= critThresh) setCritThresh(Math.min(clamped + 10, 100));
+    const nextLow = lowThresh;
+    const nextMed = clamped;
+    const nextHigh = clamped >= highThresh ? Math.min(clamped + 5, 99) : highThresh;
+    const nextCrit = clamped >= critThresh ? Math.min(clamped + 10, 100) : critThresh;
+
+    setMedThresh(nextMed);
+    setHighThresh(nextHigh);
+    setCritThresh(nextCrit);
+    autoSaveAndSync(nextLow, nextMed, nextHigh, nextCrit, geminiModel);
   };
 
   const handleHighChange = (val: number) => {
     const clamped = Math.max(medThresh + 1, Math.min(val, 99));
-    setHighThresh(clamped);
-    if (clamped >= critThresh) setCritThresh(Math.min(clamped + 5, 100));
+    const nextLow = lowThresh;
+    const nextMed = medThresh;
+    const nextHigh = clamped;
+    const nextCrit = clamped >= critThresh ? Math.min(clamped + 5, 100) : critThresh;
+
+    setHighThresh(nextHigh);
+    setCritThresh(nextCrit);
+    autoSaveAndSync(nextLow, nextMed, nextHigh, nextCrit, geminiModel);
   };
 
   const handleCritChange = (val: number) => {
     const clamped = Math.max(highThresh + 1, Math.min(val, 100));
     setCritThresh(clamped);
+    autoSaveAndSync(lowThresh, medThresh, highThresh, clamped, geminiModel);
+  };
+
+  const handleModelChange = (val: string) => {
+    setGeminiModel(val);
+    autoSaveAndSync(lowThresh, medThresh, highThresh, critThresh, val);
   };
 
   const handleSave = async () => {
     setSaving(true);
     setErrorMessage(null);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    // Instant local save
+    saveActivePolicyThresholdsLocal({
+      low_threshold: lowThresh,
+      medium_threshold: medThresh,
+      high_threshold: highThresh,
+      critical_threshold: critThresh,
+      gemini_model: geminiModel
+    });
     try {
       const res = await updateRiskPolicy({
         low_threshold: lowThresh,
@@ -111,20 +245,32 @@ export const Settings: React.FC = () => {
       if (res.database) {
         setDbStatus(res.database);
       }
+      setSyncStatus('saved');
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.detail || 'Failed to save risk policy.');
+      setSyncStatus('offline');
+      setErrorMessage(err?.response?.data?.detail || 'Saved in local browser memory. Could not reach backend server.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleResetDefaults = () => {
-    setLowThresh(20);
-    setMedThresh(40);
-    setHighThresh(60);
-    setCritThresh(80);
+    const defaults = {
+      low: 20,
+      med: 40,
+      high: 60,
+      crit: 80,
+      model: geminiModel
+    };
+    setLowThresh(defaults.low);
+    setMedThresh(defaults.med);
+    setHighThresh(defaults.high);
+    setCritThresh(defaults.crit);
+    autoSaveAndSync(defaults.low, defaults.med, defaults.high, defaults.crit, defaults.model);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
   const handleReconnectDb = async () => {
@@ -159,6 +305,20 @@ export const Settings: React.FC = () => {
               <span>RISK POLICY & PLATFORM CONFIGURATION</span>
               <span className="text-xs px-2 py-0.5 rounded font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                 SOC POLICY
+              </span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border flex items-center gap-1.5 transition-all ${
+                syncStatus === 'saving'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  : syncStatus === 'offline'
+                  ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  syncStatus === 'saving' ? 'bg-amber-400 animate-pulse' : syncStatus === 'offline' ? 'bg-blue-400' : 'bg-emerald-400'
+                }`} />
+                <span>
+                  {syncStatus === 'saving' ? 'SYNCING...' : syncStatus === 'offline' ? 'SAVED LOCALLY' : 'PERSISTED & SYNCED'}
+                </span>
               </span>
             </h1>
             <p className="text-xs text-slate-400 font-mono">
@@ -421,7 +581,7 @@ export const Settings: React.FC = () => {
                   <input
                     type="text"
                     value={geminiModel}
-                    onChange={(e) => setGeminiModel(e.target.value)}
+                    onChange={(e) => handleModelChange(e.target.value)}
                     className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-cyan-300 font-semibold text-xs focus:outline-none focus:border-cyan-500"
                   />
                   <button

@@ -32,9 +32,9 @@ async def lifespan(app: FastAPI):
         
         # Synchronize risk policy thresholds from persistent storage
         from app.models.database import SessionLocal
-        from app.models.settings import SystemPolicy
+        from app.api.settings import get_or_create_policy
         with SessionLocal() as db:
-            policy = db.query(SystemPolicy).first()
+            policy = get_or_create_policy(db)
             if policy:
                 settings.RISK_THRESHOLD_LOW = policy.low_threshold
                 settings.RISK_THRESHOLD_MEDIUM = policy.medium_threshold

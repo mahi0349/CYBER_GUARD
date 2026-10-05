@@ -330,10 +330,11 @@ export const analyzeAudio = async (file: File): Promise<AnalysisResponse> => {
 };
 
 const POLICY_STORAGE_KEY = 'cyberguard_risk_policy';
+const ALT_POLICY_STORAGE_KEY = 'quantumvault_risk_policy';
 
 export const getActivePolicyThresholds = (): PolicyConfig => {
   try {
-    const raw = localStorage.getItem(POLICY_STORAGE_KEY);
+    const raw = localStorage.getItem(POLICY_STORAGE_KEY) || localStorage.getItem(ALT_POLICY_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.low_threshold !== undefined) return parsed;
@@ -350,6 +351,22 @@ export const getActivePolicyThresholds = (): PolicyConfig => {
   };
 };
 
+export const saveActivePolicyThresholdsLocal = (policy: Partial<PolicyConfig>): PolicyConfig => {
+  const current = getActivePolicyThresholds();
+  const updated: PolicyConfig = {
+    ...current,
+    ...policy
+  };
+  try {
+    const serialized = JSON.stringify(updated);
+    localStorage.setItem(POLICY_STORAGE_KEY, serialized);
+    localStorage.setItem(ALT_POLICY_STORAGE_KEY, serialized);
+  } catch (e) {
+    console.warn('Failed to save policy to localStorage', e);
+  }
+  return updated;
+};
+
 export const classifySeverity = (score: number): 'SAFE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' => {
   const policy = getActivePolicyThresholds();
   if (score >= policy.critical_threshold) return 'CRITICAL';
@@ -362,9 +379,11 @@ export const classifySeverity = (score: number): 'SAFE' | 'LOW' | 'MEDIUM' | 'HI
 
 export const fetchRiskPolicy = async (): Promise<{ policy: PolicyConfig; database?: DatabaseStatus }> => {
   try {
-    const res = await apiClient.get<PolicyConfig & { database?: DatabaseStatus }>('/settings/policy');
+    const res = await apiClient.get<PolicyConfig & { database?: DatabaseStatus }>('/settings/policy', {
+      timeout: 3000
+    });
     const { database, ...policy } = res.data;
-    localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(policy));
+    saveActivePolicyThresholdsLocal(policy);
     return { policy, database };
   } catch (err) {
     console.warn('Backend unavailable, loading cached/default risk policy:', err);
@@ -396,12 +415,14 @@ export const updateRiskPolicy = async (payload: {
   critical_threshold: number;
   gemini_model?: string;
 }): Promise<{ policy: PolicyConfig; database?: DatabaseStatus }> => {
-  // Always update client cache immediately
-  localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(payload));
+  // Always update client cache immediately so it never resets
+  saveActivePolicyThresholdsLocal(payload);
   try {
-    const res = await apiClient.put<PolicyConfig & { database?: DatabaseStatus }>('/settings/policy', payload);
+    const res = await apiClient.put<PolicyConfig & { database?: DatabaseStatus }>('/settings/policy', payload, {
+      timeout: 3000
+    });
     const { database, ...policy } = res.data;
-    localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(policy));
+    saveActivePolicyThresholdsLocal(policy);
     return { policy, database };
   } catch (err) {
     console.warn('Backend unavailable, policy saved in browser client storage:', err);
