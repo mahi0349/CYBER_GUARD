@@ -57,7 +57,15 @@ uvicorn app.main:app --reload --port 8000
 ```
 API Documentation: `http://localhost:8000/docs`
 
-### 2. Frontend Setup
+### 2. Windows Endpoint Security Agent
+To power the real-time Endpoint Security Command Center with authentic telemetry:
+```bash
+# In project root with active python environment:
+python -m agent.main
+```
+The agent starts non-invasive collectors for processes, network sockets, Defender status, Firewall profiles, startup persistence, and software inventory.
+
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install

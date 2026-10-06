@@ -3,6 +3,12 @@ from app.models.user import User, LoginEvent
 from app.models.threat import Threat, ThreatEvidence, Scan, ModelPrediction
 from app.models.incident import Incident, ResponseAction
 from app.models.settings import SystemPolicy
+from app.models.endpoint import (
+    EndpointDevice,
+    EndpointScan,
+    EndpointThreatAlert,
+    EndpointSecurityEvent
+)
 
 __all__ = [
     "Base",
@@ -18,5 +24,9 @@ __all__ = [
     "Incident",
     "ResponseAction",
     "SystemPolicy",
+    "EndpointDevice",
+    "EndpointScan",
+    "EndpointThreatAlert",
+    "EndpointSecurityEvent",
 ]
 
