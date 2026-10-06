@@ -1,13 +1,13 @@
-# CYBERGUARD — AI Cyber Threat Detection & Response Platform
+# QuantumVault — AI Cyber Threat Detection & Response Platform
 
-CYBERGUARD is an AI-driven Security Operations Center (SOC) threat detection, explainability, and automated response platform. It unifies multi-vector threat detection (Phishing, Deepfake/Impersonation, and Account Takeover/Behavior Anomalies) with deterministic risk scoring, Gemini-powered explainability, and simulated incident containment mapped to the MITRE ATT&CK framework.
+QuantumVault is an AI-driven Security Operations Center (SOC) threat detection, explainability, and automated response platform. It unifies multi-vector threat detection (Phishing, Deepfake/Impersonation, and Account Takeover/Behavior Anomalies) with deterministic risk scoring, Gemini-powered explainability, and simulated incident containment mapped to the MITRE ATT&CK framework.
 
 ---
 
 ## 🏛️ System Architecture
 
 ```
-                         CYBERGUARD
+                         QuantumVault
                              │
               ┌──────────────┴──────────────┐
               │       React Dashboard       │  (Vite, Tailwind, Recharts, Lucide)
@@ -69,7 +69,7 @@ Frontend Dashboard: `http://localhost:5173`
 ```bash
 docker-compose up -d
 ```
-*Note: If PostgreSQL is not running, CYBERGUARD automatically falls back to local SQLite (`cyberguard.db`), requiring zero setup!*
+*Note: If PostgreSQL is not running, QuantumVault automatically falls back to local SQLite (`quantumvault.db`), requiring zero setup!*
 
 ---
 

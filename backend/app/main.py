@@ -20,13 +20,13 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("cyberguard.main")
+logger = logging.getLogger("quantumvault.main")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: ensure tables and seed initial data
-    logger.info("Initializing CYBERGUARD Threat Orchestration Platform...")
+    logger.info("Initializing QuantumVault Threat Orchestration Platform...")
     try:
         Base.metadata.create_all(bind=engine)
         seed_database()
@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Error during database initialization: {e}")
     yield
     # Shutdown
-    logger.info("Shutting down CYBERGUARD platform.")
+    logger.info("Shutting down QuantumVault platform.")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -95,7 +95,7 @@ def health_check():
 @app.get("/", tags=["Root"])
 def root():
     return {
-        "platform": "CYBERGUARD AI Cyber Threat Detection & Response Platform",
+        "platform": "QuantumVault AI Cyber Threat Detection & Response Platform",
         "docs_url": "/docs",
         "version": settings.VERSION,
         "status": "online"

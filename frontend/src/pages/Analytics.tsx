@@ -157,7 +157,7 @@ export const Analytics: React.FC = () => {
               Adversaries send spearphishing messages containing deceptive links to acquire victim credentials and execute initial access.
             </p>
             <div className="mt-3 text-[10px] text-red-300 bg-red-950/60 px-2 py-1 rounded border border-red-800/60">
-              CYBERGUARD Defense: Lexical RF + Domain Sinkhole
+              QuantumVault Defense: Lexical RF + Domain Sinkhole
             </div>
           </div>
 
@@ -168,7 +168,7 @@ export const Analytics: React.FC = () => {
               Adversaries obtain and abuse credentials of existing accounts via brute force and Tor proxies to bypass perimeter defenses.
             </p>
             <div className="mt-3 text-[10px] text-amber-300 bg-amber-950/60 px-2 py-1 rounded border border-amber-800/60">
-              CYBERGUARD Defense: Isolation Forest + Token Revocation
+              QuantumVault Defense: Isolation Forest + Token Revocation
             </div>
           </div>
 
@@ -179,7 +179,7 @@ export const Analytics: React.FC = () => {
               Adversaries generate synthetic biometric artifacts or audio clones to spoof identity during social engineering authorization requests.
             </p>
             <div className="mt-3 text-[10px] text-purple-300 bg-purple-950/60 px-2 py-1 rounded border border-purple-800/60">
-              CYBERGUARD Defense: Frequency-Domain Fourier Assessment
+              QuantumVault Defense: Frequency-Domain Fourier Assessment
             </div>
           </div>
         </div>

@@ -2,16 +2,16 @@ from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "CYBERGUARD"
+    PROJECT_NAME: str = "QuantumVault"
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "sqlite:///./cyberguard.db"
+    DATABASE_URL: str = "sqlite:///./quantumvault.db"
     
     # Security
-    SECRET_KEY: str = "cyberguard_hackathon_super_secret_jwt_key_992182"
+    SECRET_KEY: str = "quantumvault_hackathon_super_secret_jwt_key_992182"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     

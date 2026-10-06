@@ -2,18 +2,18 @@ services:
   # 1. PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: cyberguard_db
+    container_name: quantumvault_db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-cyberguard}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cyberguard_secure_password}
-      POSTGRES_DB: ${POSTGRES_DB:-cyberguard}
+      POSTGRES_USER: ${POSTGRES_USER:-quantumvault}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quantumvault_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-quantumvault}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cyberguard} -d ${POSTGRES_DB:-cyberguard}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quantumvault} -d ${POSTGRES_DB:-quantumvault}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,12 +23,12 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cyberguard_backend
+    container_name: quantumvault_backend
     environment:
       - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-cyberguard}:${POSTGRES_PASSWORD:-cyberguard_secure_password}@postgres:5432/${POSTGRES_DB:-cyberguard}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-quantumvault}:${POSTGRES_PASSWORD:-quantumvault_secure_password}@postgres:5432/${POSTGRES_DB:-quantumvault}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - SECRET_KEY=${SECRET_KEY:-cyberguard_prod_super_secret_jwt_key_92813}
+      - SECRET_KEY=${SECRET_KEY:-quantumvault_prod_super_secret_jwt_key_92813}
     ports:
       - "8000:8000"
     depends_on:
@@ -43,7 +43,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=/api/v1
-    container_name: cyberguard_frontend
+    container_name: quantumvault_frontend
     ports:
       - "80:80"
     depends_on:

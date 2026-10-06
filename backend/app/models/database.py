@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
 
-logger = logging.getLogger("cyberguard.database")
+logger = logging.getLogger("quantumvault.database")
 
 configured_db_url = settings.DATABASE_URL
 active_db_url = configured_db_url
@@ -25,7 +25,7 @@ try:
     logger.info(f"Database successfully connected using: {engine.dialect.name}")
 except Exception as e:
     logger.warning(f"Could not connect to configured database ({active_db_url}): {e}. Falling back to local SQLite.")
-    active_db_url = "sqlite:///./cyberguard.db"
+    active_db_url = "sqlite:///./quantumvault.db"
     connect_args = {"check_same_thread": False}
     engine = create_engine(active_db_url, connect_args=connect_args)
     fallback_active = True
@@ -102,7 +102,7 @@ def get_database_status(db=None) -> Dict[str, Any]:
     }
 
 def try_connect_postgres(
-    target_url: str = "postgresql://cyberguard:cyberguard_secure_password@localhost:5432/cyberguard"
+    target_url: str = "postgresql://quantumvault:quantumvault_secure_password@localhost:5432/quantumvault"
 ) -> Tuple[bool, str]:
     """Attempt dynamic switch / connection to PostgreSQL."""
     global engine, SessionLocal, active_db_url, fallback_active
@@ -121,6 +121,6 @@ def try_connect_postgres(
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         active_db_url = target_url
         fallback_active = False
-        return True, "Successfully connected to Docker PostgreSQL container (cyberguard_db) and verified tables."
+        return True, "Successfully connected to Docker PostgreSQL container (quantumvault_db) and verified tables."
     except Exception as e:
         return False, f"Connection failed: {str(e)}"

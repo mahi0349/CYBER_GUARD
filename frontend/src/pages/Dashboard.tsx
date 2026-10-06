@@ -56,7 +56,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
-          <p className="text-sm font-mono text-slate-400">Loading CYBERGUARD telemetry...</p>
+          <p className="text-sm font-mono text-slate-400">Loading QuantumVault telemetry...</p>
         </div>
       </div>
     );

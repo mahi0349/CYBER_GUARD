@@ -22,7 +22,8 @@ from app.schemas.analysis import EvidenceItem, AnalysisResponse
 from app.services.risk_engine import risk_engine
 from app.services.explanation_engine import explanation_engine
 
-logger = logging.getLogger("cyberguard.email_auth")
+logger = logging.getLogger("quantumvault.email_auth")
+
 
 # ── Configurable Allowlist ──────────────────────────────────────────────
 DOMAIN_ALLOWLIST = [

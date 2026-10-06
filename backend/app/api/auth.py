@@ -19,7 +19,7 @@ def login(creds: LoginRequest, db: Session = Depends(get_db)):
     # Simple analyst authentication for demo/prototype
     if creds.email and creds.password:
         return {
-            "access_token": "cyberguard_demo_bearer_token_xyz123",
+            "access_token": "quantumvault_demo_bearer_token_xyz123",
             "token_type": "bearer",
             "user": {
                 "id": 1,
@@ -38,6 +38,6 @@ def get_me():
     return {
         "id": 1,
         "name": "SOC Lead Analyst",
-        "email": "analyst@cyberguard.internal",
+        "email": "analyst@quantumvault.internal",
         "role": "tier3_analyst"
     }

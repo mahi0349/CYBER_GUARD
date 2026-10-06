@@ -12,7 +12,7 @@ from app.services.risk_engine import risk_engine
 from app.services.explanation_engine import explanation_engine
 from app.config import settings
 
-logger = logging.getLogger("cyberguard.phishing")
+logger = logging.getLogger("quantumvault.phishing")
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../../ml/models/phishing_model.joblib")
 
@@ -45,7 +45,7 @@ class PhishingService:
             return False, ""
         try:
             payload = {
-                "client": {"clientId": "cyberguard", "clientVersion": "1.0.0"},
+                "client": {"clientId": "quantumvault", "clientVersion": "1.0.0"},
                 "threatInfo": {
                     "threatTypes": [
                         "MALWARE", "SOCIAL_ENGINEERING",

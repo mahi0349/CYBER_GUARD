@@ -89,7 +89,7 @@ export const mockDashboardStats: DashboardStats = {
   recent_incidents: [
     {
       id: 1,
-      incident_code: 'CG-1021',
+      incident_code: 'QV-1021',
       title: 'Credential Phishing Campaign — Banking Lookalike',
       description: 'Critical phishing risk mimicking Chase authentication gateway.',
       severity: 'CRITICAL',
@@ -101,7 +101,7 @@ export const mockDashboardStats: DashboardStats = {
     },
     {
       id: 2,
-      incident_code: 'CG-1022',
+      incident_code: 'QV-1022',
       title: 'Account Takeover — Credential Stuffing Anomaly',
       description: '14 sequential failed logins from Tor Exit node followed by unauthorized tool-based session.',
       severity: 'CRITICAL',
@@ -113,7 +113,7 @@ export const mockDashboardStats: DashboardStats = {
     },
     {
       id: 3,
-      incident_code: 'CG-1023',
+      incident_code: 'QV-1023',
       title: 'Executive Biometric Impersonation Probe',
       description: 'Facial boundary artifacts and high-frequency noise anomaly indicate synthetic image generator.',
       severity: 'HIGH',
@@ -329,8 +329,9 @@ export const analyzeAudio = async (file: File): Promise<AnalysisResponse> => {
   }
 };
 
-const POLICY_STORAGE_KEY = 'cyberguard_risk_policy';
-const ALT_POLICY_STORAGE_KEY = 'quantumvault_risk_policy';
+const POLICY_STORAGE_KEY = 'quantumvault_risk_policy';
+const ALT_POLICY_STORAGE_KEY = 'cyberguard_risk_policy';
+
 
 export const getActivePolicyThresholds = (): PolicyConfig => {
   try {
@@ -392,7 +393,7 @@ export const fetchRiskPolicy = async (): Promise<{ policy: PolicyConfig; databas
       database: {
         configured_driver: 'sqlite',
         active_driver: 'sqlite',
-        active_url: 'sqlite:///./cyberguard.db (Offline mode)',
+        active_url: 'sqlite:///./quantumvault.db (Offline mode)',
         status: 'local_fallback',
         is_postgres: false,
         postgres_container_running: false,
@@ -440,7 +441,7 @@ export const fetchDatabaseStatus = async (): Promise<DatabaseStatus> => {
     return {
       configured_driver: 'sqlite',
       active_driver: 'sqlite',
-      active_url: 'sqlite:///./cyberguard.db',
+      active_url: 'sqlite:///./quantumvault.db',
       status: 'offline',
       is_postgres: false,
       postgres_container_running: false,

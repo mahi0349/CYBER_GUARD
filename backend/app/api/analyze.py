@@ -84,10 +84,10 @@ def _persist_threat_and_incident(
     incident_id = None
     if analysis.severity in ["CRITICAL", "HIGH"]:
         base_code_num = 1000 + threat.id
-        incident_code = f"CG-{base_code_num}"
+        incident_code = f"QV-{base_code_num}"
         counter = 1
         while db.query(Incident).filter(Incident.incident_code == incident_code).first():
-            incident_code = f"CG-{base_code_num}_{counter}"
+            incident_code = f"QV-{base_code_num}_{counter}"
             counter += 1
         incident = Incident(
             threat_id=threat.id,
