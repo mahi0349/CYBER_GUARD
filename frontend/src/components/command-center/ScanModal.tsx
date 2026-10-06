@@ -9,6 +9,7 @@ interface ScanModalProps {
   scans: ScanRecord[];
   onScanTriggered: (scan: ScanRecord) => void;
   isAgentOnline: boolean;
+  deviceId?: string;
 }
 
 export const ScanModal: React.FC<ScanModalProps> = ({
@@ -16,7 +17,8 @@ export const ScanModal: React.FC<ScanModalProps> = ({
   onClose,
   scans,
   onScanTriggered,
-  isAgentOnline
+  isAgentOnline,
+  deviceId
 }) => {
   const [loadingType, setLoadingType] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,7 +74,7 @@ export const ScanModal: React.FC<ScanModalProps> = ({
     setErrorMsg(null);
     setLoadingType(scanType);
     try {
-      const res = await triggerScan(scanType);
+      const res = await triggerScan(scanType, deviceId);
       onScanTriggered(res);
       if (res.status === 'UNAVAILABLE') {
         setErrorMsg('Scan unavailable: Endpoint agent is disconnected.');

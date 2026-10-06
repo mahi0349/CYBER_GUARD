@@ -69,6 +69,10 @@ class AgentConfig(BaseModel):
     backend_http_url: str = os.environ.get("QUANTUMVAULT_HTTP_URL", f"{_base_url}/api/v1/command-center")
     backend_ws_url: str = os.environ.get("QUANTUMVAULT_WS_URL", _default_ws)
     api_token: str = os.environ.get("QUANTUMVAULT_API_TOKEN", "qv-endpoint-agent-token-2026")
+
+    # Magic Link Dashboard Auto-open
+    dashboard_url: str = os.environ.get("QUANTUMVAULT_DASHBOARD_URL", "http://localhost:5173").rstrip("/")
+    auto_open_browser: bool = os.environ.get("QUANTUMVAULT_AUTO_OPEN", "true").lower() in ("true", "1", "yes")
     
     # Telemetry intervals (in seconds)
     telemetry_interval: int = 3

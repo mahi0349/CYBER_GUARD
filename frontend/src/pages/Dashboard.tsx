@@ -27,7 +27,11 @@ import {
   ArrowRight,
   Radio,
   Sparkles,
-  ShieldQuestion
+  ShieldQuestion,
+  Laptop,
+  Share2,
+  Check,
+  Copy
 } from 'lucide-react';
 import {
   AreaChart,
@@ -53,6 +57,8 @@ import {
 } from '../types/commandCenter';
 
 import {
+  fetchDevices,
+  DeviceSummary,
   fetchAgentStatus,
   fetchSystemTelemetry,
   fetchTelemetryHistory,
@@ -88,6 +94,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // Sub-tabs for modes
   const [hunterSubTab, setHunterSubTab] = useState<'processes' | 'network'>('processes');
   const [inventorySubTab, setInventorySubTab] = useState<'software' | 'services' | 'startup' | 'files'>('software');
+
+  // Magic Link / Multi-Device State
+  const queryDevice = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('device') || '';
+    }
+    return '';
+  }, []);
+
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(queryDevice);
+  const [availableDevices, setAvailableDevices] = useState<DeviceSummary[]>([]);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Core Live State
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
@@ -126,10 +145,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // WebSocket ref
   const wsRef = useRef<WebSocket | null>(null);
 
+  // Device selection handler (updates query param seamlessly)
+  const handleSelectDevice = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (deviceId) {
+        url.searchParams.set('device', deviceId);
+      } else {
+        url.searchParams.delete('device');
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    // Reset secondary collections so they re-fetch for target device
+    setSoftware([]);
+    setServices([]);
+    setStartup([]);
+    setTrackedFiles([]);
+
+    loadAllData(deviceId);
+  };
+
+  const handleCopyMagicLink = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (selectedDeviceId) {
+        url.searchParams.set('device', selectedDeviceId);
+      }
+      navigator.clipboard.writeText(url.toString());
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
+
   // Initial Full Load
-  const loadAllData = async () => {
+  const loadAllData = async (targetDevId?: string) => {
+    const activeId = targetDevId !== undefined ? targetDevId : selectedDeviceId;
     try {
       const [
+        devicesRes,
         statusRes,
         telRes,
         histRes,
@@ -142,19 +197,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         fEvtRes,
         scanRes
       ] = await Promise.all([
-        fetchAgentStatus(),
-        fetchSystemTelemetry(),
-        fetchTelemetryHistory(),
-        fetchProtectionStatus(),
-        fetchRiskScore(),
-        fetchProcesses(),
-        fetchNetwork(),
-        fetchThreats(),
-        fetchSecurityEvents(),
-        fetchFileEvents(),
-        fetchScans()
+        fetchDevices(),
+        fetchAgentStatus(activeId || undefined),
+        fetchSystemTelemetry(activeId || undefined),
+        fetchTelemetryHistory(activeId || undefined),
+        fetchProtectionStatus(activeId || undefined),
+        fetchRiskScore(activeId || undefined),
+        fetchProcesses(150, undefined, activeId || undefined),
+        fetchNetwork(150, undefined, activeId || undefined),
+        fetchThreats(activeId || undefined),
+        fetchSecurityEvents(50, undefined, activeId || undefined),
+        fetchFileEvents(activeId || undefined),
+        fetchScans(activeId || undefined)
       ]);
 
+      setAvailableDevices(devicesRes);
       setAgentStatus(statusRes);
       if (telRes) setTelemetry(telRes);
       if (histRes.length > 0) setTelemetryHistory(histRes);
@@ -166,6 +223,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setEvents(evtRes);
       setFileEvents(fEvtRes);
       setScans(scanRes);
+
+      if (!activeId) {
+        if (statusRes?.device_id) {
+          setSelectedDeviceId(statusRes.device_id);
+        } else if (devicesRes.length > 0) {
+          setSelectedDeviceId(devicesRes[0].device_id);
+        }
+      }
     } catch (e) {
       console.error('Error loading command center data:', e);
     } finally {
@@ -176,28 +241,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // Load secondary data on demand
   useEffect(() => {
     if (viewMode === 'inventory') {
+      const devId = selectedDeviceId || undefined;
       if (inventorySubTab === 'software' && software.length === 0) {
-        fetchSoftware().then(setSoftware);
+        fetchSoftware(undefined, devId).then(setSoftware);
       } else if (inventorySubTab === 'services' && services.length === 0) {
-        fetchServices().then(setServices);
+        fetchServices(undefined, devId).then(setServices);
       } else if (inventorySubTab === 'startup' && startup.length === 0) {
-        fetchStartup().then(setStartup);
+        fetchStartup(devId).then(setStartup);
       } else if (inventorySubTab === 'files' && trackedFiles.length === 0) {
-        fetchTrackedFiles().then(setTrackedFiles);
+        fetchTrackedFiles(devId).then(setTrackedFiles);
       }
     }
-  }, [viewMode, inventorySubTab]);
+  }, [viewMode, inventorySubTab, selectedDeviceId]);
 
-  // WebSocket Setup with auto-reconnect
+  // WebSocket Setup with auto-reconnect on target device change
   useEffect(() => {
-    loadAllData();
+    loadAllData(selectedDeviceId);
 
     let isMounted = true;
     let reconnectTimeout: any = null;
 
     const connectWs = () => {
       try {
-        const wsUrl = getCommandCenterWebSocketUrl();
+        const wsUrl = getCommandCenterWebSocketUrl(selectedDeviceId || undefined);
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -210,6 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           try {
             const data = JSON.parse(event.data);
             if (data.type === 'init_state') {
+              if (data.available_devices) setAvailableDevices(data.available_devices);
               if (data.status) setAgentStatus(data.status);
               if (data.telemetry) setTelemetry(data.telemetry);
               if (data.telemetry_history) setTelemetryHistory(data.telemetry_history);
@@ -235,6 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               if (data.risk) setRiskScore(data.risk);
             } else if (data.type === 'status_update') {
               setAgentStatus(data.status);
+              fetchDevices().then(setAvailableDevices).catch(() => {});
             } else if (data.type === 'threats_update') {
               setThreats(data.threats);
               if (data.risk) setRiskScore(data.risk);
@@ -268,7 +336,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     connectWs();
 
     const pollInterval = setInterval(() => {
-      fetchAgentStatus().then(st => setAgentStatus(st)).catch(() => {});
+      fetchAgentStatus(selectedDeviceId || undefined).then(st => setAgentStatus(st)).catch(() => {});
+      fetchDevices().then(setAvailableDevices).catch(() => {});
     }, 8000);
 
     return () => {
@@ -277,7 +346,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (wsRef.current) wsRef.current.close();
     };
-  }, []);
+  }, [selectedDeviceId]);
 
   // Filtered Processes
   const filteredProcesses = useMemo(() => {
@@ -342,6 +411,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 <span>ENDPOINT COMMAND CENTER</span>
               </h1>
 
+              {/* Endpoint Device Selector dropdown */}
+              <div className="flex items-center gap-2 bg-slate-900/95 border border-cyan-500/40 hover:border-cyan-400 rounded-xl px-3 py-1.5 shadow-md shadow-cyan-950/40 transition-all">
+                <Laptop className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Target:</span>
+                <select
+                  value={selectedDeviceId || ''}
+                  onChange={(e) => handleSelectDevice(e.target.value)}
+                  className="bg-transparent text-xs font-mono font-bold text-cyan-300 focus:outline-none cursor-pointer pr-1"
+                >
+                  {availableDevices.map(d => (
+                    <option key={d.device_id} value={d.device_id} className="bg-slate-900 text-slate-200">
+                      {d.hostname} ({d.os_name}) — {d.status}
+                    </option>
+                  ))}
+                  {availableDevices.length === 0 && (
+                    <option value="" className="bg-slate-900 text-slate-200">
+                      {agentStatus?.hostname || 'Default Endpoint'}
+                    </option>
+                  )}
+                </select>
+              </div>
+
+              {/* Magic Link Auto-Detected Badge */}
+              {queryDevice && (
+                <span className="flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 font-bold shadow-md shadow-cyan-950/60" title={`Auto-loaded telemetry for endpoint ID: ${queryDevice}`}>
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                  <span>MAGIC-LINK LOADED</span>
+                </span>
+              )}
+
               {/* Live Status Badge */}
               {isAgentOnline && (
                 <span className="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold shadow-md shadow-emerald-950/60">
@@ -369,7 +468,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             {/* Host telemetry pills */}
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono mt-2">
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
-                Host: <strong className="text-cyan-300 font-semibold">{agentStatus?.hostname || 'Unknown'}</strong>
+                Device ID: <strong className="text-cyan-300 font-semibold">{agentStatus?.device_id || selectedDeviceId || 'default'}</strong>
+              </span>
+              <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
+                Host: <strong className="text-slate-100 font-semibold">{agentStatus?.hostname || 'Unknown'}</strong>
               </span>
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
                 OS: <strong className="text-slate-100 font-semibold">{agentStatus?.os_name || 'Windows'} {agentStatus?.os_version || ''}</strong>
@@ -426,8 +528,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </button>
           </div>
 
+          {/* Magic Link Share Button */}
           <button
-            onClick={loadAllData}
+            onClick={handleCopyMagicLink}
+            title="Copy Magic Link with pre-loaded endpoint ID"
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-mono font-semibold transition-all border shadow-sm ${
+              copiedLink
+                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                : 'bg-slate-900/90 border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 text-slate-300'
+            }`}
+          >
+            {copiedLink ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Share Link</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => loadAllData()}
             title="Refresh Telemetry"
             className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 text-slate-300 transition-all shadow-sm"
           >
@@ -1464,6 +1589,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           setScans(prev => [newScan, ...prev]);
         }}
         isAgentOnline={isAgentOnline}
+        deviceId={selectedDeviceId}
       />
     </div>
   );
