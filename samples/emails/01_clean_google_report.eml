@@ -1,0 +1,31 @@
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com [209.85.220.41])
+        by mx.odisha.gov.in (Postfix) with ESMTPS id ABC123DEF456
+        for <admin@odisha.gov.in>; Mon, 06 Oct 2026 09:30:15 +0530
+Received: from smtp.google.com (smtp.google.com [172.217.14.26])
+        by mail-sor-f41.google.com with SMTP; Mon, 06 Oct 2026 04:00:10 +0000
+Authentication-Results: mx.odisha.gov.in;
+       spf=pass (google.com: domain of noreply@google.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=noreply@google.com;
+       dkim=pass header.d=google.com header.s=20230601;
+       dmarc=pass (p=REJECT dis=NONE) header.from=google.com
+MIME-Version: 1.0
+From: Google Workspace <noreply@google.com>
+To: admin@odisha.gov.in
+Reply-To: noreply@google.com
+Return-Path: <noreply@google.com>
+Subject: Your monthly Google Workspace usage report
+Message-ID: <CABx+XJ3vK9nT4bR7mQzL2FpHk1sW8dY6uI0oA=wXyZ@mail.google.com>
+Date: Mon, 06 Oct 2026 04:00:05 +0000
+Content-Type: text/plain; charset="UTF-8"
+
+Dear Administrator,
+
+Here is your monthly Google Workspace usage summary for Odisha Knowledge Corporation Limited.
+
+Active Users: 142
+Storage Used: 2.3 TB / 5 TB
+Security Events: 0 critical, 3 informational
+
+No action is required. This is an automated report.
+
+Regards,
+Google Workspace Team

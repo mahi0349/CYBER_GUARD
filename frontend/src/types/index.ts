@@ -5,7 +5,7 @@ export interface EvidenceItem {
 }
 
 export interface AnalysisResponse {
-  threat_type: 'phishing' | 'deepfake' | 'deepfake_audio' | 'account_takeover';
+  threat_type: 'phishing' | 'deepfake' | 'deepfake_audio' | 'account_takeover' | 'email_authenticity';
   prediction: 'malicious' | 'suspicious' | 'clean' | 'manipulated' | 'authentic';
   confidence: number;
   risk_score: number;
@@ -16,6 +16,25 @@ export interface AnalysisResponse {
   mitre_technique?: string;
   mitre_name?: string;
   features?: Record<string, any>;
+  threat_id?: number;
+  incident_id?: number;
+}
+
+// Email Authenticity Analysis types
+export interface EmailAuthFinding {
+  check: string;
+  status: 'pass' | 'fail' | 'warn' | 'info' | 'error';
+  detail: string;
+  weight: number;
+}
+
+export interface EmailAuthResult {
+  score: number;
+  level: 'Safe' | 'Low' | 'Medium' | 'High' | 'Critical';
+  findings: EmailAuthFinding[];
+  evidence: Record<string, any>;
+  recommended_actions: string[];
+  explanation?: string;
   threat_id?: number;
   incident_id?: number;
 }
@@ -96,4 +115,3 @@ export interface DatabaseStatus {
     users: number;
   };
 }
-

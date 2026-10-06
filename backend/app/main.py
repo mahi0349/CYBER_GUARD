@@ -14,6 +14,7 @@ from app.api.threats import router as threats_router
 from app.api.incidents import router as incidents_router
 from app.api.analyze import router as analyze_router
 from app.api.settings import router as settings_router
+from app.api.email_auth import router as email_auth_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,6 +77,10 @@ app.include_router(threats_router, prefix=api_prefix)
 app.include_router(incidents_router, prefix=api_prefix)
 app.include_router(analyze_router, prefix=api_prefix)
 app.include_router(settings_router, prefix=api_prefix)
+app.include_router(email_auth_router, prefix=api_prefix)
+# Also expose directly under /api to support POST /api/email/analyze
+app.include_router(email_auth_router, prefix="/api")
+
 
 
 @app.get("/health", tags=["Health"])

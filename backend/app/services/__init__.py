@@ -6,6 +6,7 @@ from app.services.deepfake_service import deepfake_service, DeepfakeService
 from app.services.behavior_service import behavior_service, BehaviorService
 from app.services.email_analyzer import email_analyzer, EmailAnalyzer
 from app.services.audio_forensics import audio_forensics_service, AudioForensicsService
+from app.services.email_auth import analyze_email as email_auth_analyze, email_auth_to_analysis_response
 
 __all__ = [
     "risk_engine",
@@ -24,4 +25,6 @@ __all__ = [
     "EmailAnalyzer",
     "audio_forensics_service",
     "AudioForensicsService",
+    "email_auth_analyze",
+    "email_auth_to_analysis_response",
 ]

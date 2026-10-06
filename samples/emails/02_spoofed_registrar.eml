@@ -1,0 +1,29 @@
+Received: from mail-relay.attacker-infra.net (unknown [45.33.82.19])
+        by mx.odisha.gov.in (Postfix) with ESMTP id 9F8A72B1C3
+        for <vc@bfriendsb.co.in>; Mon, 06 Oct 2026 10:45:22 +0530
+Authentication-Results: mx.odisha.gov.in;
+       spf=fail (domain ceo-registrar-office.com does not designate 45.33.82.19 as permitted sender) smtp.mailfrom=urgent@ceo-registrar-office.com;
+       dkim=none;
+       dmarc=fail (p=NONE dis=NONE) header.from=ceo-registrar-office.com
+MIME-Version: 1.0
+From: "Registrar, Odisha University" <urgent@ceo-registrar-office.com>
+To: vc@bfriendsb.co.in
+Reply-To: registrar.urgent.reply@gmail.com
+Return-Path: <bounce@attacker-infra.net>
+Subject: URGENT: Immediate Action Required - Vice Chancellor Directive
+Date: Mon, 06 Oct 2026 05:15:18 +0000
+Content-Type: text/plain; charset="UTF-8"
+
+Dear Vice Chancellor,
+
+This is an extremely urgent communication from the Registrar's office.
+
+Due to a recent audit finding, we require you to immediately update your administrative credentials through the secure portal below. Failure to act within 24 hours will result in temporary suspension of your account access.
+
+Portal: https://odisha-gov-secure-update.com/admin/verify
+
+Please treat this as CONFIDENTIAL and do not forward this email.
+
+Regards,
+Office of the Registrar
+Odisha University Administrative Block

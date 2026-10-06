@@ -1,0 +1,35 @@
+Received: from mail-out.sbl-secure.net (unknown [103.224.18.77])
+        by mx.odisha.gov.in (Postfix) with ESMTP id 3C4D5E6F78
+        for <accounts@odisha.gov.in>; Mon, 06 Oct 2026 11:02:44 +0530
+Received: from relay2.sbl-secure.net (unknown [103.224.18.78])
+        by mail-out.sbl-secure.net with SMTP; Mon, 06 Oct 2026 05:32:30 +0000
+Received: from origin.sbl-secure.net (unknown [103.224.18.79])
+        by relay2.sbl-secure.net with SMTP; Mon, 06 Oct 2026 05:32:25 +0000
+Authentication-Results: mx.odisha.gov.in;
+       spf=softfail (domain onlinesbl.com is not authorized) smtp.mailfrom=alert@onlinesbl.com;
+       dkim=fail header.d=onlinesbl.com;
+       dmarc=fail (p=NONE dis=NONE) header.from=onlinesbl.com
+MIME-Version: 1.0
+From: "SBI Online Banking" <alert@onlinesbl.com>
+To: accounts@odisha.gov.in
+Reply-To: alert@onlinesbl.com
+Return-Path: <alert@onlinesbl.com>
+Subject: Your SBI Account Has Been Temporarily Locked - Verify Now
+Date: Mon, 06 Oct 2026 05:32:20 +0000
+Content-Type: text/plain; charset="UTF-8"
+
+Dear Valued Customer,
+
+We have detected unusual activity on your State Bank of India account ending in ****7823.
+
+For your security, your account has been temporarily locked. To restore access, please verify your identity immediately:
+
+Verification Link: https://onlinesbl.com/secure/verify-account
+
+If you do not verify within 12 hours, your account will be permanently suspended.
+
+Important: This is an automated security notification. Do not reply to this email.
+
+Regards,
+SBI Internet Banking Security Team
+State Bank of India
