@@ -57,10 +57,12 @@ dist-ssr/
 .DS_Store
 Thumbs.db
 
-# Documentation (kept locally only)
+# Documentation (old docs folder kept locally only, new doc/ folder tracked)
 docs/
 *.doc
 *.docx
+!doc/
+!doc/**
 
 # Local startup scripts
 *.bat
