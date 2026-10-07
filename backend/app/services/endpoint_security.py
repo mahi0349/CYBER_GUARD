@@ -86,17 +86,107 @@ class DeviceState:
 
 class EndpointSecurityManager:
     def __init__(self):
-        # Connected browser clients: map websocket to optional requested device_id
+        # Connected browser clients
         self.browser_clients: Dict[WebSocket, Optional[str]] = {}
-        # Connected agent WebSockets: map device_id -> WebSocket
+        # Connected agent WebSockets: map device_id -> WebSocket (at most 1 in single-device mode)
         self.agent_sockets: Dict[str, WebSocket] = {}
 
-        # Multi-device registry
+        # Single-device state
+        self.single_device_mode: bool = True
         self.devices: Dict[str, DeviceState] = {}
         self.active_device_id: Optional[str] = None
+        self.blocked_attempts: List[Dict[str, Any]] = []
 
         # Pre-populate known devices from DB
         self._load_known_devices_from_db()
+
+    def can_agent_connect(self, incoming_device_id: str) -> tuple[bool, str]:
+        """
+        Enforce Single-Device Policy:
+        Only 1 active machine is permitted at a time.
+        If an agent is already active and online from a different device_id, reject the incoming connection.
+        """
+        if not self.single_device_mode:
+            return True, ""
+
+        if not self.active_device_id or self.active_device_id == incoming_device_id:
+            return True, ""
+
+        # Check if the current active device is holding an active socket OR recently sent telemetry
+        existing_ws = self.agent_sockets.get(self.active_device_id)
+        existing_dev = self.devices.get(self.active_device_id)
+        is_active = False
+        if existing_ws is not None:
+            is_active = True
+        elif existing_dev:
+            st = existing_dev.get_status()
+            if st.get("status") in ("ONLINE", "DEGRADED"):
+                is_active = True
+
+        if is_active:
+            active_host = existing_dev.device_info.get("hostname", self.active_device_id) if existing_dev else self.active_device_id
+            msg = (
+                f"SINGLE-DEVICE POLICY ENFORCED: Endpoint '{active_host}' is already active. "
+                f"Concurrent connections are prohibited (no 2 devices at a time). "
+                f"Please terminate the agent on '{active_host}' or disconnect it before connecting another machine."
+            )
+            self.record_blocked_attempt(incoming_device_id, msg)
+            return False, msg
+
+        # If previous device has gone offline or dropped socket, allow the new device to take over
+        return True, ""
+
+    def record_blocked_attempt(self, attempted_device_id: str, reason: str):
+        attempt_record = {
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "attempted_device_id": attempted_device_id,
+            "active_device_id": self.active_device_id,
+            "reason": reason
+        }
+        self.blocked_attempts.append(attempt_record)
+        if len(self.blocked_attempts) > 10:
+            self.blocked_attempts = self.blocked_attempts[-10:]
+        logger.warning(f"Single-Device Violation: {reason}")
+
+    async def disconnect_device(self, device_id: Optional[str] = None) -> Dict[str, Any]:
+        """Disconnect and release the current active device slot so a new machine can bind."""
+        target_id = device_id or self.active_device_id
+        if not target_id:
+            return {"status": "no_active_device"}
+
+        ws = self.agent_sockets.pop(target_id, None)
+        if ws:
+            try:
+                await ws.close(code=1000, reason="DISCONNECTED_BY_OPERATOR")
+            except Exception:
+                pass
+
+        if target_id in self.devices:
+            self.devices[target_id].device_info["status"] = "OFFLINE"
+            self.devices[target_id].last_telemetry_time = None
+
+        prev_id = self.active_device_id
+        self.active_device_id = None
+
+        await self.broadcast_to_browsers({
+            "type": "device_disconnected",
+            "message": f"Endpoint '{prev_id}' was disconnected. Slot is ready for local agent connection."
+        })
+        return {"status": "ok", "disconnected_device_id": prev_id}
+
+    def get_device_mode_info(self) -> Dict[str, Any]:
+        active_dev = self.devices.get(self.active_device_id) if self.active_device_id else None
+        st = active_dev.get_status() if active_dev else None
+        return {
+            "mode": "SINGLE_DEVICE",
+            "max_allowed": 1,
+            "is_locked": self.active_device_id is not None and len(self.agent_sockets) > 0,
+            "active_device_id": self.active_device_id,
+            "active_hostname": st.get("hostname") if st else None,
+            "active_status": st.get("status") if st else "OFFLINE",
+            "blocked_attempts_count": len(self.blocked_attempts),
+            "recent_blocked_attempts": self.blocked_attempts[-5:]
+        }
 
     def _load_known_devices_from_db(self):
         try:

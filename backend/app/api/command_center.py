@@ -1,7 +1,9 @@
 import json
 import logging
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, Header
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.models.database import get_db
@@ -144,6 +146,52 @@ def get_scans(device_id: Optional[str] = Query(None)):
 async def run_scan(payload: ScanTriggerRequest, device_id: Optional[str] = Query(None)):
     return await endpoint_security_mgr.trigger_scan(payload.scan_type, device_id)
 
+# ----------------- Single-Device Licensing & State -----------------
+@router.get("/device/mode")
+def get_device_mode():
+    """Return single-device licensing and active machine lock state."""
+    return endpoint_security_mgr.get_device_mode_info()
+
+@router.post("/device/disconnect")
+async def disconnect_active_device():
+    """Manually disconnect/release the active endpoint so another device can connect."""
+    return await endpoint_security_mgr.disconnect_device()
+
+# ----------------- Agent Downloads (Standalone .exe and Batch script) -----------------
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+
+@router.get("/agent/download")
+def download_agent_executable():
+    """Download the compiled standalone QuantumVault Endpoint Agent (.exe) for local execution."""
+    exe_path = PROJECT_ROOT / "dist" / "QuantumVault-Agent.exe"
+    if not exe_path.exists():
+        exe_path = PROJECT_ROOT / "QuantumVault-Agent.exe"
+
+    if not exe_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="QuantumVault-Agent.exe is being generated or was not found on the server."
+        )
+
+    return FileResponse(
+        path=str(exe_path),
+        filename="QuantumVault-Agent.exe",
+        media_type="application/vnd.microsoft.portable-executable"
+    )
+
+@router.get("/agent/download-script")
+def download_agent_script():
+    """Download the 1-click batch launcher script to run the local agent."""
+    bat_path = PROJECT_ROOT / "run_agent.bat"
+    if not bat_path.exists():
+        raise HTTPException(status_code=404, detail="run_agent.bat not found on server.")
+
+    return FileResponse(
+        path=str(bat_path),
+        filename="run_quantumvault_agent.bat",
+        media_type="application/x-bat"
+    )
+
 # ----------------- Agent Ingestion Endpoint (HTTP fallback) -----------------
 @router.post("/ingest")
 async def ingest_agent_payload(
@@ -158,6 +206,11 @@ async def ingest_agent_payload(
     msg_type = payload.get("type", "unknown")
     device_id = payload.get("device_id") or x_device_id or "unknown"
     data = payload.get("data")
+
+    # Enforce Single-Device policy
+    can_connect, reason = endpoint_security_mgr.can_agent_connect(device_id)
+    if not can_connect:
+        raise HTTPException(status_code=409, detail=reason)
 
     await endpoint_security_mgr.process_agent_message(msg_type, device_id, data)
     return {"status": "ok"}
@@ -185,9 +238,23 @@ async def agent_websocket(websocket: WebSocket, token: Optional[str] = Query(Non
         return
 
     dev_id = device_id or "unknown"
+
+    # Enforce Single-Device mode: only 1 machine at a time!
+    can_connect, reason = endpoint_security_mgr.can_agent_connect(dev_id)
+    if not can_connect:
+        await websocket.accept()
+        await websocket.send_json({
+            "type": "error",
+            "error": "SINGLE_DEVICE_LIMIT_EXCEEDED",
+            "message": reason,
+            "active_device": endpoint_security_mgr.active_device_id
+        })
+        await websocket.close(code=4003, reason="SINGLE_DEVICE_LIMIT_EXCEEDED")
+        return
+
     await websocket.accept()
     endpoint_security_mgr.agent_sockets[dev_id] = websocket
-    logger.info(f"Endpoint Agent connected via WebSocket: device_id={dev_id}")
+    logger.info(f"Endpoint Agent connected via WebSocket: device_id={dev_id} [Single-Device Mode Active]")
 
     try:
         while True:
@@ -211,3 +278,4 @@ async def agent_websocket(websocket: WebSocket, token: Optional[str] = Query(Non
     except Exception as e:
         logger.warning(f"Agent websocket exception: {e}")
         endpoint_security_mgr.agent_sockets.pop(dev_id, None)
+

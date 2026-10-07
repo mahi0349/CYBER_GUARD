@@ -75,13 +75,25 @@ class AgentTransport:
             try:
                 msg = await self.ws.recv()
                 data = json.loads(msg)
+                if data.get("error") == "SINGLE_DEVICE_LIMIT_EXCEEDED":
+                    logger.error(f"🛑 [SINGLE-DEVICE POLICY] {data.get('message')}")
+                    self.is_connected = False
+                    self.ws = None
+                    await asyncio.sleep(10)
+                    continue
                 if self.on_command_callback:
                     asyncio.create_task(self.on_command_callback(data))
-            except websockets.ConnectionClosed:
-                logger.info("WebSocket disconnected from backend.")
-                self.is_connected = False
-                self.ws = None
-                await asyncio.sleep(2)
+            except websockets.ConnectionClosed as cc:
+                if cc.code == 4003:
+                    logger.error("🛑 [SINGLE-DEVICE POLICY] Connection refused: Another device is currently active on QuantumVault.")
+                    self.is_connected = False
+                    self.ws = None
+                    await asyncio.sleep(10)
+                else:
+                    logger.info("WebSocket disconnected from backend.")
+                    self.is_connected = False
+                    self.ws = None
+                    await asyncio.sleep(2)
             except Exception as e:
                 logger.warning(f"Error reading from WebSocket: {e}")
                 self.is_connected = False

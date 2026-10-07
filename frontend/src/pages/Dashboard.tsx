@@ -29,7 +29,10 @@ import {
   Sparkles,
   ShieldQuestion,
   Laptop,
-  Share2,
+  Download,
+  Lock,
+  PowerOff,
+  AlertCircle,
   Check,
   Copy
 } from 'lucide-react';
@@ -57,8 +60,6 @@ import {
 } from '../types/commandCenter';
 
 import {
-  fetchDevices,
-  DeviceSummary,
   fetchAgentStatus,
   fetchSystemTelemetry,
   fetchTelemetryHistory,
@@ -74,12 +75,18 @@ import {
   fetchThreats,
   fetchScans,
   fetchRiskScore,
-  getCommandCenterWebSocketUrl
+  getCommandCenterWebSocketUrl,
+  fetchDeviceMode,
+  disconnectDevice,
+  getAgentDownloadUrl,
+  getAgentScriptDownloadUrl,
+  DeviceModeInfo
 } from '../services/commandCenterApi';
 
 import { ProcessModal } from '../components/command-center/ProcessModal';
 import { AlertModal } from '../components/command-center/AlertModal';
 import { ScanModal } from '../components/command-center/ScanModal';
+import { AgentDownloadModal } from '../components/command-center/AgentDownloadModal';
 
 type ViewMode = 'overview' | 'hunter' | 'inventory';
 
@@ -95,18 +102,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [hunterSubTab, setHunterSubTab] = useState<'processes' | 'network'>('processes');
   const [inventorySubTab, setInventorySubTab] = useState<'software' | 'services' | 'startup' | 'files'>('software');
 
-  // Magic Link / Multi-Device State
-  const queryDevice = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('device') || '';
-    }
-    return '';
-  }, []);
-
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(queryDevice);
-  const [availableDevices, setAvailableDevices] = useState<DeviceSummary[]>([]);
-  const [copiedLink, setCopiedLink] = useState(false);
+  // Single-Device State & Modals
+  const [deviceModeInfo, setDeviceModeInfo] = useState<DeviceModeInfo | null>(null);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [conflictAlert, setConflictAlert] = useState<string | null>(null);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // Core Live State
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
@@ -145,46 +145,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // WebSocket ref
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Device selection handler (updates query param seamlessly)
-  const handleSelectDevice = (deviceId: string) => {
-    setSelectedDeviceId(deviceId);
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (deviceId) {
-        url.searchParams.set('device', deviceId);
-      } else {
-        url.searchParams.delete('device');
-      }
-      window.history.replaceState({}, '', url.toString());
-    }
-
-    // Reset secondary collections so they re-fetch for target device
-    setSoftware([]);
-    setServices([]);
-    setStartup([]);
-    setTrackedFiles([]);
-
-    loadAllData(deviceId);
-  };
-
-  const handleCopyMagicLink = () => {
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (selectedDeviceId) {
-        url.searchParams.set('device', selectedDeviceId);
-      }
-      navigator.clipboard.writeText(url.toString());
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
-    }
-  };
-
-  // Initial Full Load
-  const loadAllData = async (targetDevId?: string) => {
-    const activeId = targetDevId !== undefined ? targetDevId : selectedDeviceId;
+  // Initial Full Load for Single Active Device
+  const loadAllData = async () => {
     try {
       const [
-        devicesRes,
+        modeRes,
         statusRes,
         telRes,
         histRes,
@@ -197,21 +162,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         fEvtRes,
         scanRes
       ] = await Promise.all([
-        fetchDevices(),
-        fetchAgentStatus(activeId || undefined),
-        fetchSystemTelemetry(activeId || undefined),
-        fetchTelemetryHistory(activeId || undefined),
-        fetchProtectionStatus(activeId || undefined),
-        fetchRiskScore(activeId || undefined),
-        fetchProcesses(150, undefined, activeId || undefined),
-        fetchNetwork(150, undefined, activeId || undefined),
-        fetchThreats(activeId || undefined),
-        fetchSecurityEvents(50, undefined, activeId || undefined),
-        fetchFileEvents(activeId || undefined),
-        fetchScans(activeId || undefined)
+        fetchDeviceMode(),
+        fetchAgentStatus(),
+        fetchSystemTelemetry(),
+        fetchTelemetryHistory(),
+        fetchProtectionStatus(),
+        fetchRiskScore(),
+        fetchProcesses(150),
+        fetchNetwork(150),
+        fetchThreats(),
+        fetchSecurityEvents(50),
+        fetchFileEvents(),
+        fetchScans()
       ]);
 
-      setAvailableDevices(devicesRes);
+      if (modeRes) setDeviceModeInfo(modeRes);
       setAgentStatus(statusRes);
       if (telRes) setTelemetry(telRes);
       if (histRes.length > 0) setTelemetryHistory(histRes);
@@ -223,14 +188,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setEvents(evtRes);
       setFileEvents(fEvtRes);
       setScans(scanRes);
-
-      if (!activeId) {
-        if (statusRes?.device_id) {
-          setSelectedDeviceId(statusRes.device_id);
-        } else if (devicesRes.length > 0) {
-          setSelectedDeviceId(devicesRes[0].device_id);
-        }
-      }
     } catch (e) {
       console.error('Error loading command center data:', e);
     } finally {
@@ -238,32 +195,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     }
   };
 
+  const handleDisconnectDevice = async () => {
+    setIsDisconnecting(true);
+    try {
+      await disconnectDevice();
+      await loadAllData();
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
   // Load secondary data on demand
   useEffect(() => {
     if (viewMode === 'inventory') {
-      const devId = selectedDeviceId || undefined;
       if (inventorySubTab === 'software' && software.length === 0) {
-        fetchSoftware(undefined, devId).then(setSoftware);
+        fetchSoftware().then(setSoftware);
       } else if (inventorySubTab === 'services' && services.length === 0) {
-        fetchServices(undefined, devId).then(setServices);
+        fetchServices().then(setServices);
       } else if (inventorySubTab === 'startup' && startup.length === 0) {
-        fetchStartup(devId).then(setStartup);
+        fetchStartup().then(setStartup);
       } else if (inventorySubTab === 'files' && trackedFiles.length === 0) {
-        fetchTrackedFiles(devId).then(setTrackedFiles);
+        fetchTrackedFiles().then(setTrackedFiles);
       }
     }
-  }, [viewMode, inventorySubTab, selectedDeviceId]);
+  }, [viewMode, inventorySubTab]);
 
-  // WebSocket Setup with auto-reconnect on target device change
+  // WebSocket Setup (Single-Device stream)
   useEffect(() => {
-    loadAllData(selectedDeviceId);
+    loadAllData();
 
     let isMounted = true;
     let reconnectTimeout: any = null;
 
     const connectWs = () => {
       try {
-        const wsUrl = getCommandCenterWebSocketUrl(selectedDeviceId || undefined);
+        const wsUrl = getCommandCenterWebSocketUrl();
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -276,7 +242,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           try {
             const data = JSON.parse(event.data);
             if (data.type === 'init_state') {
-              if (data.available_devices) setAvailableDevices(data.available_devices);
               if (data.status) setAgentStatus(data.status);
               if (data.telemetry) setTelemetry(data.telemetry);
               if (data.telemetry_history) setTelemetryHistory(data.telemetry_history);
@@ -302,10 +267,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               if (data.risk) setRiskScore(data.risk);
             } else if (data.type === 'status_update') {
               setAgentStatus(data.status);
-              fetchDevices().then(setAvailableDevices).catch(() => {});
+              fetchDeviceMode().then(setDeviceModeInfo).catch(() => {});
             } else if (data.type === 'threats_update') {
               setThreats(data.threats);
               if (data.risk) setRiskScore(data.risk);
+            } else if (data.type === 'single_device_conflict') {
+              setConflictAlert(data.alert?.description || data.message || 'Concurrent device connection was blocked.');
+            } else if (data.type === 'device_disconnected') {
+              loadAllData();
             } else if (data.type === 'scan_update') {
               setScans(prev => {
                 const next = [...prev];
@@ -336,9 +305,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     connectWs();
 
     const pollInterval = setInterval(() => {
-      fetchAgentStatus(selectedDeviceId || undefined).then(st => setAgentStatus(st)).catch(() => {});
-      fetchDevices().then(setAvailableDevices).catch(() => {});
-    }, 8000);
+      fetchAgentStatus().then(st => setAgentStatus(st)).catch(() => {});
+      fetchDeviceMode().then(dm => setDeviceModeInfo(dm)).catch(() => {});
+    }, 7000);
 
     return () => {
       isMounted = false;
@@ -346,7 +315,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (wsRef.current) wsRef.current.close();
     };
-  }, [selectedDeviceId]);
+  }, []);
 
   // Filtered Processes
   const filteredProcesses = useMemo(() => {
@@ -411,35 +380,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 <span>ENDPOINT COMMAND CENTER</span>
               </h1>
 
-              {/* Endpoint Device Selector dropdown */}
-              <div className="flex items-center gap-2 bg-slate-900/95 border border-cyan-500/40 hover:border-cyan-400 rounded-xl px-3 py-1.5 shadow-md shadow-cyan-950/40 transition-all">
-                <Laptop className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Target:</span>
-                <select
-                  value={selectedDeviceId || ''}
-                  onChange={(e) => handleSelectDevice(e.target.value)}
-                  className="bg-transparent text-xs font-mono font-bold text-cyan-300 focus:outline-none cursor-pointer pr-1"
-                >
-                  {availableDevices.map(d => (
-                    <option key={d.device_id} value={d.device_id} className="bg-slate-900 text-slate-200">
-                      {d.hostname} ({d.os_name}) — {d.status}
-                    </option>
-                  ))}
-                  {availableDevices.length === 0 && (
-                    <option value="" className="bg-slate-900 text-slate-200">
-                      {agentStatus?.hostname || 'Default Endpoint'}
-                    </option>
-                  )}
-                </select>
+              {/* Single-Device Protection Mode Badge */}
+              <div className="flex items-center gap-2 bg-slate-900/95 border border-cyan-500/40 rounded-xl px-3 py-1.5 shadow-md shadow-cyan-950/40">
+                <Lock className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">MODE:</span>
+                <span className="text-xs font-mono font-bold text-cyan-300">SINGLE DEVICE (LOCKED)</span>
               </div>
-
-              {/* Magic Link Auto-Detected Badge */}
-              {queryDevice && (
-                <span className="flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 font-bold shadow-md shadow-cyan-950/60" title={`Auto-loaded telemetry for endpoint ID: ${queryDevice}`}>
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                  <span>MAGIC-LINK LOADED</span>
-                </span>
-              )}
 
               {/* Live Status Badge */}
               {isAgentOnline && (
@@ -468,10 +414,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             {/* Host telemetry pills */}
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono mt-2">
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
-                Device ID: <strong className="text-cyan-300 font-semibold">{agentStatus?.device_id || selectedDeviceId || 'default'}</strong>
-              </span>
-              <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
-                Host: <strong className="text-slate-100 font-semibold">{agentStatus?.hostname || 'Unknown'}</strong>
+                Active Machine: <strong className="text-cyan-300 font-semibold">{agentStatus?.hostname || 'Not Connected'}</strong>
               </span>
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
                 OS: <strong className="text-slate-100 font-semibold">{agentStatus?.os_name || 'Windows'} {agentStatus?.os_version || ''}</strong>
@@ -483,6 +426,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   {agentStatus?.telemetry_age_seconds !== null && agentStatus?.telemetry_age_seconds !== undefined ? `${agentStatus.telemetry_age_seconds}s ago` : '0s'}
                 </strong>
               </span>
+
+              {/* Release Lock button if agent is connected */}
+              {isAgentOnline && (
+                <button
+                  onClick={handleDisconnectDevice}
+                  disabled={isDisconnecting}
+                  title="Release active machine slot so you can connect another computer"
+                  className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 hover:border-red-500/50 hover:bg-red-500/10 text-slate-400 hover:text-red-300 flex items-center gap-1.5 text-[11px] font-mono transition-all ml-1"
+                >
+                  <PowerOff className="w-3 h-3 text-red-400" />
+                  <span>{isDisconnecting ? 'Releasing...' : 'Release Device Lock'}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -528,27 +484,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </button>
           </div>
 
-          {/* Magic Link Share Button */}
+          {/* Download Agent Button */}
           <button
-            onClick={handleCopyMagicLink}
-            title="Copy Magic Link with pre-loaded endpoint ID"
-            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-mono font-semibold transition-all border shadow-sm ${
-              copiedLink
-                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                : 'bg-slate-900/90 border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 text-slate-300'
-            }`}
+            onClick={() => setIsDownloadModalOpen(true)}
+            title="Download the QuantumVault Agent executable or launcher to run locally"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-500/40 hover:to-blue-500/40 border border-cyan-400/60 hover:border-cyan-300 text-xs font-mono font-bold text-cyan-200 shadow-md shadow-cyan-950/60 transition-all group"
           >
-            {copiedLink ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Link Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Share Link</span>
-              </>
-            )}
+            <Download className="w-4 h-4 text-cyan-400 group-hover:translate-y-0.5 transition-transform" />
+            <span>DOWNLOAD AGENT (.EXE)</span>
           </button>
 
           <button
@@ -568,6 +511,67 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </button>
         </div>
       </div>
+
+      {/* ================= SINGLE DEVICE CONFLICT NOTIFICATION BANNER ================= */}
+      {conflictAlert && (
+        <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs font-mono flex items-center justify-between gap-3 shadow-lg shadow-amber-950/40 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <strong className="text-amber-300 block">Single-Device Guard Activated</strong>
+              <span>{conflictAlert}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setConflictAlert(null)}
+            className="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition-all shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* ================= ZERO-AGENT / OFFLINE HERO ONBOARDING BANNER ================= */}
+      {isAgentOffline && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-[#0a1120]/95 to-slate-900/95 border border-cyan-500/40 shadow-xl shadow-cyan-950/50 flex flex-col md:flex-row md:items-center justify-between gap-5 animate-in fade-in">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="p-3.5 rounded-2xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-400 shadow-lg shadow-cyan-950/60 ring-1 ring-cyan-400/20 shrink-0">
+              <Laptop className="w-7 h-7 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-mono font-bold text-white uppercase tracking-wide">
+                  NO ACTIVE ENDPOINT AGENT — SINGLE DEVICE STANDBY
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  AWAITING AGENT
+                </span>
+              </div>
+              <p className="text-xs font-mono text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                QuantumVault is configured in dedicated <strong>Single-Device Protection</strong> mode (no 2 devices at a time). Download and run the local agent on this PC to stream memory telemetry, Defender alerts, and active firewall posture.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              onClick={() => setIsDownloadModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-xs font-bold shadow-lg shadow-cyan-500/25 transition-all border border-cyan-400/50"
+            >
+              <Download className="w-4 h-4" />
+              <span>DOWNLOAD AGENT (.EXE)</span>
+            </button>
+            <a
+              href={getAgentScriptDownloadUrl()}
+              download="run_quantumvault_agent.bat"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-bold transition-all border border-slate-700 hover:border-cyan-500/40"
+            >
+              <FileCode2 className="w-4 h-4 text-blue-400" />
+              <span>RUNNER (.BAT)</span>
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODE 1: EXECUTIVE OVERVIEW (DEFAULT & EYE-CATCHING) */}
@@ -1589,7 +1593,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           setScans(prev => [newScan, ...prev]);
         }}
         isAgentOnline={isAgentOnline}
-        deviceId={selectedDeviceId}
+        deviceId={agentStatus?.device_id}
+      />
+
+      <AgentDownloadModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        activeDeviceId={agentStatus?.device_id}
+        activeDeviceName={agentStatus?.hostname}
+        deviceModeInfo={deviceModeInfo}
+        onDeviceDisconnected={() => {
+          loadAllData();
+        }}
       />
     </div>
   );

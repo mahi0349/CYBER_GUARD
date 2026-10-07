@@ -218,6 +218,48 @@ export const fetchRiskScore = async (deviceId?: string): Promise<RiskScore | nul
   }
 };
 
+export interface DeviceModeInfo {
+  mode: 'SINGLE_DEVICE';
+  max_allowed: number;
+  is_locked: boolean;
+  active_device_id: string | null;
+  active_hostname: string | null;
+  active_status: string;
+  blocked_attempts_count: number;
+  recent_blocked_attempts: Array<{
+    timestamp: string;
+    attempted_device_id: string;
+    active_device_id: string;
+    reason: string;
+  }>;
+}
+
+export const fetchDeviceMode = async (): Promise<DeviceModeInfo | null> => {
+  try {
+    const res = await client.get<DeviceModeInfo>('/command-center/device/mode');
+    return res.data;
+  } catch {
+    return null;
+  }
+};
+
+export const disconnectDevice = async (): Promise<boolean> => {
+  try {
+    await client.post('/command-center/device/disconnect');
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const getAgentDownloadUrl = (): string => {
+  return `${API_BASE_URL}/command-center/agent/download`;
+};
+
+export const getAgentScriptDownloadUrl = (): string => {
+  return `${API_BASE_URL}/command-center/agent/download-script`;
+};
+
 export const getCommandCenterWebSocketUrl = (deviceId?: string): string => {
   const envApi = import.meta.env.VITE_API_URL;
   let wsUrl: string;
@@ -238,3 +280,4 @@ export const getCommandCenterWebSocketUrl = (deviceId?: string): string => {
 
   return deviceId ? `${wsUrl}?device_id=${encodeURIComponent(deviceId)}` : wsUrl;
 };
+

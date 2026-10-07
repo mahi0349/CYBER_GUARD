@@ -246,14 +246,14 @@ class QuantumVaultAgent:
         await self.transport.connect_ws()
         await self.register_device()
 
-        # Magic Link: Automatically open browser to this endpoint's dashboard
+        # Single-Device Mode: Automatically open browser to the local QuantumVault Command Center
         if self.config.auto_open_browser:
-            magic_url = f"{self.config.dashboard_url}/?device={self.config.device_id}"
-            logger.info(f"🚀 [Magic Link] Auto-opening QuantumVault Command Center for {self.config.hostname}: {magic_url}")
+            dashboard_url = self.config.dashboard_url
+            logger.info(f"🚀 [Single-Device Mode] Launching Command Center: {dashboard_url}")
             try:
                 import webbrowser
                 loop = asyncio.get_event_loop()
-                loop.run_in_executor(None, webbrowser.open, magic_url)
+                loop.run_in_executor(None, webbrowser.open, dashboard_url)
             except Exception as e:
                 logger.warning(f"Could not auto-open browser: {e}")
 
