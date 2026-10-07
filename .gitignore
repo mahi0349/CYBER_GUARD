@@ -64,4 +64,5 @@ docs/
 
 # Local startup scripts
 *.bat
+!run_agent.bat
 start_quantumvault.bat
