@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, Header, Request, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -180,16 +180,36 @@ def download_agent_executable():
     )
 
 @router.get("/agent/download-script")
-def download_agent_script():
-    """Download the 1-click batch launcher script to run the local agent."""
+def download_agent_script(request: Request):
+    """Download the 1-click batch launcher pre-configured with this deployment's backend URL."""
     bat_path = PROJECT_ROOT / "run_agent.bat"
     if not bat_path.exists():
         raise HTTPException(status_code=404, detail="run_agent.bat not found on server.")
 
-    return FileResponse(
-        path=str(bat_path),
-        filename="run_quantumvault_agent.bat",
-        media_type="application/x-bat"
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.headers.get("host", "127.0.0.1:8000"))
+    public_url = f"{proto}://{host}".rstrip("/")
+
+    content = bat_path.read_text(encoding="utf-8")
+    content = content.replace("set \"FALLBACK_URL=http://127.0.0.1:8000\"", f'set "FALLBACK_URL={public_url}"')
+
+    return Response(
+        content=content,
+        media_type="application/x-bat",
+        headers={"Content-Disposition": 'attachment; filename="run_quantumvault_agent.bat"'}
+    )
+
+@router.get("/agent/download-config")
+def download_agent_config(request: Request):
+    """Download pre-configured agent_config.json for this deployment."""
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.headers.get("host", "127.0.0.1:8000"))
+    public_url = f"{proto}://{host}".rstrip("/")
+    cfg_json = json.dumps({"backend_url": public_url}, indent=2)
+    return Response(
+        content=cfg_json,
+        media_type="application/json",
+        headers={"Content-Disposition": 'attachment; filename="agent_config.json"'}
     )
 
 # ----------------- Agent Ingestion Endpoint (HTTP fallback) -----------------

@@ -46,8 +46,40 @@ def get_windows_edition():
 
 _os_name, _os_version = get_windows_edition()
 
-# Resolve backend URL from environment or fallback to localhost
-_base_url = os.environ.get("QUANTUMVAULT_BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
+import sys
+import json
+from pathlib import Path
+
+# Resolve backend URL: CLI flag > ENV var > agent_config.json > localhost default
+_cli_backend = None
+for _idx, _arg in enumerate(sys.argv):
+    if _arg in ("--backend", "-b") and _idx + 1 < len(sys.argv):
+        _cli_backend = sys.argv[_idx + 1]
+        break
+    elif _arg.startswith("http://") or _arg.startswith("https://"):
+        _cli_backend = _arg
+        break
+
+_file_backend = None
+try:
+    _exe_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path.cwd()
+    for _cfg_file in (Path.cwd() / "agent_config.json", _exe_dir / "agent_config.json"):
+        if _cfg_file.exists():
+            with open(_cfg_file, "r", encoding="utf-8") as _f:
+                _data = json.load(_f)
+                _file_backend = _data.get("backend_url")
+                if _file_backend:
+                    break
+except Exception:
+    pass
+
+_base_url = (
+    _cli_backend
+    or os.environ.get("QUANTUMVAULT_BACKEND_URL")
+    or _file_backend
+    or "http://127.0.0.1:8000"
+).rstrip("/")
+
 if _base_url.startswith("https://"):
     _default_ws = "wss://" + _base_url[8:] + "/api/v1/command-center/agent-ws"
 elif _base_url.startswith("http://"):
