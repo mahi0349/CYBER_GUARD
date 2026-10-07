@@ -252,10 +252,6 @@ export const disconnectDevice = async (): Promise<boolean> => {
   }
 };
 
-export const getAgentDownloadUrl = (): string => {
-  return `${API_BASE_URL}/command-center/agent/download`;
-};
-
 export const getAgentScriptDownloadUrl = (): string => {
   return `${API_BASE_URL}/command-center/agent/download-script`;
 };

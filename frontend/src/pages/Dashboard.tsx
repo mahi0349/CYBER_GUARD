@@ -78,8 +78,6 @@ import {
   getCommandCenterWebSocketUrl,
   fetchDeviceMode,
   disconnectDevice,
-  getAgentDownloadUrl,
-  getAgentScriptDownloadUrl,
   DeviceModeInfo
 } from '../services/commandCenterApi';
 
@@ -107,6 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [conflictAlert, setConflictAlert] = useState<string | null>(null);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [copiedTerminalInline, setCopiedTerminalInline] = useState(false);
 
   // Core Live State
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
@@ -484,14 +483,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </button>
           </div>
 
-          {/* Download Agent Button */}
+          {/* Run Agent Terminal Button */}
           <button
             onClick={() => setIsDownloadModalOpen(true)}
-            title="Download the QuantumVault Agent executable or launcher to run locally"
+            title="View terminal command to start the local endpoint agent"
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-500/40 hover:to-blue-500/40 border border-cyan-400/60 hover:border-cyan-300 text-xs font-mono font-bold text-cyan-200 shadow-md shadow-cyan-950/60 transition-all group"
           >
-            <Download className="w-4 h-4 text-cyan-400 group-hover:translate-y-0.5 transition-transform" />
-            <span>DOWNLOAD AGENT (.EXE)</span>
+            <Terminal className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+            <span>RUN AGENT (TERMINAL)</span>
           </button>
 
           <button
@@ -533,10 +532,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       {/* ================= ZERO-AGENT / OFFLINE HERO ONBOARDING BANNER ================= */}
       {isAgentOffline && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-[#0a1120]/95 to-slate-900/95 border border-cyan-500/40 shadow-xl shadow-cyan-950/50 flex flex-col md:flex-row md:items-center justify-between gap-5 animate-in fade-in">
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-[#0a1120]/95 to-slate-900/95 border border-cyan-500/40 shadow-xl shadow-cyan-950/50 flex flex-col lg:flex-row lg:items-center justify-between gap-5 animate-in fade-in">
           <div className="flex items-start sm:items-center gap-4">
             <div className="p-3.5 rounded-2xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-400 shadow-lg shadow-cyan-950/60 ring-1 ring-cyan-400/20 shrink-0">
-              <Laptop className="w-7 h-7 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+              <Terminal className="w-7 h-7 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -548,27 +547,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </span>
               </div>
               <p className="text-xs font-mono text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                QuantumVault is configured in dedicated <strong>Single-Device Protection</strong> mode (no 2 devices at a time). Download and run the local agent on this PC to stream memory telemetry, Defender alerts, and active firewall posture.
+                QuantumVault is running in <strong>Single-Device Protection</strong> mode (no 2 devices at a time). Run the agent command in your local terminal to stream Defender alerts, firewall profiles, and active process telemetry.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {/* Inline Copyable Terminal Snippet */}
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 shadow-inner">
+              <span className="text-slate-500 select-none">$</span>
+              <code>python -m agent.main</code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('python -m agent.main');
+                  setCopiedTerminalInline(true);
+                  setTimeout(() => setCopiedTerminalInline(false), 2000);
+                }}
+                className="p-1 hover:text-white transition-colors"
+                title="Copy terminal command"
+              >
+                {copiedTerminalInline ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+              </button>
+            </div>
+
             <button
               onClick={() => setIsDownloadModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-xs font-bold shadow-lg shadow-cyan-500/25 transition-all border border-cyan-400/50"
             >
-              <Download className="w-4 h-4" />
-              <span>DOWNLOAD AGENT (.EXE)</span>
+              <Terminal className="w-4 h-4" />
+              <span>TERMINAL INSTRUCTIONS</span>
             </button>
-            <a
-              href={getAgentScriptDownloadUrl()}
-              download="run_quantumvault_agent.bat"
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-bold transition-all border border-slate-700 hover:border-cyan-500/40"
-            >
-              <FileCode2 className="w-4 h-4 text-blue-400" />
-              <span>RUNNER (.BAT)</span>
-            </a>
           </div>
         </div>
       )}

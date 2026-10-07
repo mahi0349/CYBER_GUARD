@@ -157,27 +157,8 @@ async def disconnect_active_device():
     """Manually disconnect/release the active endpoint so another device can connect."""
     return await endpoint_security_mgr.disconnect_device()
 
-# ----------------- Agent Downloads (Standalone .exe and Batch script) -----------------
+# ----------------- Agent Runner & Config Endpoints -----------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-
-@router.get("/agent/download")
-def download_agent_executable():
-    """Download the compiled standalone QuantumVault Endpoint Agent (.exe) for local execution."""
-    exe_path = PROJECT_ROOT / "dist" / "QuantumVault-Agent.exe"
-    if not exe_path.exists():
-        exe_path = PROJECT_ROOT / "QuantumVault-Agent.exe"
-
-    if not exe_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="QuantumVault-Agent.exe is being generated or was not found on the server."
-        )
-
-    return FileResponse(
-        path=str(exe_path),
-        filename="QuantumVault-Agent.exe",
-        media_type="application/vnd.microsoft.portable-executable"
-    )
 
 @router.get("/agent/download-script")
 def download_agent_script(request: Request):
