@@ -266,7 +266,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               if (data.risk) setRiskScore(data.risk);
             } else if (data.type === 'status_update') {
               setAgentStatus(data.status);
-              fetchDeviceMode().then(setDeviceModeInfo).catch(() => {});
+              fetchDeviceMode().then(setDeviceModeInfo).catch(() => { });
             } else if (data.type === 'threats_update') {
               setThreats(data.threats);
               if (data.risk) setRiskScore(data.risk);
@@ -304,8 +304,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     connectWs();
 
     const pollInterval = setInterval(() => {
-      fetchAgentStatus().then(st => setAgentStatus(st)).catch(() => {});
-      fetchDeviceMode().then(dm => setDeviceModeInfo(dm)).catch(() => {});
+      fetchAgentStatus().then(st => setAgentStatus(st)).catch(() => { });
+      fetchDeviceMode().then(dm => setDeviceModeInfo(dm)).catch(() => { });
     }, 7000);
 
     return () => {
@@ -448,11 +448,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="flex items-center p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner">
             <button
               onClick={() => setViewMode('overview')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
-                viewMode === 'overview'
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-mono font-bold transition-all ${viewMode === 'overview'
                   ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-950/60 ring-1 ring-cyan-400/40'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+                }`}
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>Overview</span>
@@ -460,11 +459,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
             <button
               onClick={() => setViewMode('hunter')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
-                viewMode === 'hunter'
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-mono font-bold transition-all ${viewMode === 'hunter'
                   ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-950/60 ring-1 ring-cyan-400/40'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+                }`}
             >
               <Crosshair className="w-4 h-4" />
               <span>Process & Net ({processes.length})</span>
@@ -472,11 +470,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
             <button
               onClick={() => setViewMode('inventory')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
-                viewMode === 'inventory'
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-mono font-bold transition-all ${viewMode === 'inventory'
                   ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-950/60 ring-1 ring-cyan-400/40'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+                }`}
             >
               <PackageCheck className="w-4 h-4" />
               <span>Inventory</span>
@@ -605,10 +602,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               const badgeStyle = isCritical
                 ? 'bg-red-500/20 text-red-300 border-red-500/50 shadow-red-950/50'
                 : isHigh
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
-                : isLow
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-cyan-950/50'
-                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50';
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
+                  : isLow
+                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-cyan-950/50'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50';
 
               return (
                 <div className="lg:col-span-5 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/90 to-[#070b16]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl group transition-all duration-300">
@@ -703,11 +700,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                                 )}
                                 <span className="text-slate-200 text-xs font-medium truncate">{c.factor}</span>
                               </div>
-                              <span className={`font-bold px-2 py-0.5 rounded text-[11px] shrink-0 ${
-                                c.type === 'credit'
+                              <span className={`font-bold px-2 py-0.5 rounded text-[11px] shrink-0 ${c.type === 'credit'
                                   ? 'text-emerald-300 bg-emerald-500/15 border border-emerald-500/30'
                                   : 'text-red-300 bg-red-500/15 border border-red-500/30'
-                              }`}>
+                                }`}>
                                 {c.impact > 0 ? `+${c.impact} pts` : `${c.impact} pts`}
                               </span>
                             </div>
@@ -747,11 +743,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <span>NATIVE WINDOWS DEFENSE CONTROLS</span>
                   </span>
-                  <span className={`text-[11px] font-mono px-3 py-1 rounded-full border uppercase font-extrabold shadow-sm ${
-                    protection?.defender?.real_time_protection && protection?.firewall?.all_enabled
+                  <span className={`text-[11px] font-mono px-3 py-1 rounded-full border uppercase font-extrabold shadow-sm ${protection?.defender?.real_time_protection && protection?.firewall?.all_enabled
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50'
                       : 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
-                  }`}>
+                    }`}>
                     {protection?.defender?.real_time_protection && protection?.firewall?.all_enabled ? 'ALL DEFENSES ACTIVE' : 'ACTION REQUIRED'}
                   </span>
                 </div>
@@ -766,9 +761,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         </div>
                         <span className="font-bold text-sm text-slate-100 font-mono">Microsoft Defender</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                        protection?.defender?.real_time_protection ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${protection?.defender?.real_time_protection ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        }`}>
                         {protection?.defender?.real_time_protection ? 'PROTECTED' : 'DISABLED'}
                       </span>
                     </div>
@@ -795,10 +789,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         <span className="text-slate-400">Signature Age</span>
                         <div className="flex items-center gap-1.5">
                           <strong className="text-slate-200">
-                            {protection?.defender?.signature_age_days === undefined || protection?.defender?.signature_age_days === null 
-                              ? 'Today' 
-                              : protection?.defender?.signature_age_days === 0 
-                                ? 'Today' 
+                            {protection?.defender?.signature_age_days === undefined || protection?.defender?.signature_age_days === null
+                              ? 'Today'
+                              : protection?.defender?.signature_age_days === 0
+                                ? 'Today'
                                 : `${protection?.defender?.signature_age_days}d ago`}
                           </strong>
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">
@@ -826,9 +820,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         </div>
                         <span className="font-bold text-sm text-slate-100 font-mono">Windows Firewall</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                        protection?.firewall?.all_enabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${protection?.firewall?.all_enabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        }`}>
                         {protection?.firewall?.all_enabled ? 'ALL PROFILES ON' : 'PARTIAL'}
                       </span>
                     </div>
@@ -840,11 +833,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                           return (
                             <div
                               key={prof}
-                              className={`p-2.5 rounded-xl border text-center transition-all ${
-                                isEnabled
+                              className={`p-2.5 rounded-xl border text-center transition-all ${isEnabled
                                   ? 'bg-emerald-950/25 border-emerald-500/30 hover:border-emerald-500/60'
                                   : 'bg-red-950/20 border-red-500/30 hover:border-red-500/50'
-                              }`}
+                                }`}
                             >
                               <span className="text-[11px] text-slate-300 block font-semibold">{prof}</span>
                               <div className="flex items-center justify-center gap-1 mt-1">
@@ -980,11 +972,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-slate-700/50 mt-3">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 shadow-sm ${
-                        ramPercent > 85
+                      className={`h-full rounded-full transition-all duration-500 shadow-sm ${ramPercent > 85
                           ? 'bg-gradient-to-r from-amber-500 to-red-500 shadow-red-500/50'
                           : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 shadow-emerald-500/50'
-                      }`}
+                        }`}
                       style={{ width: `${Math.min(100, Math.max(4, ramPercent))}%` }}
                     />
                   </div>
@@ -1129,11 +1120,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-red-500/50 cursor-pointer transition-all flex items-center justify-between group shadow-sm hover:shadow-red-950/20"
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`px-2.5 py-1 rounded text-[10px] font-bold font-mono shadow-sm ${
-                          t.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-300 border border-red-500/40' :
-                          t.severity === 'HIGH' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40' :
-                          'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded text-[10px] font-bold font-mono shadow-sm ${t.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-300 border border-red-500/40' :
+                            t.severity === 'HIGH' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40' :
+                              'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                          }`}>
                           {t.severity}
                         </span>
                         <div>
@@ -1173,11 +1163,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                           <span className="text-[10px] text-slate-500">{new Date(s.started_at).toLocaleTimeString()}</span>
                         </div>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        s.status === 'COMPLETED' ? 'text-emerald-300 bg-emerald-500/15 border border-emerald-500/30' :
-                        s.status === 'RUNNING' ? 'text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 animate-pulse' :
-                        'text-slate-400 bg-slate-800 border border-slate-700'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.status === 'COMPLETED' ? 'text-emerald-300 bg-emerald-500/15 border border-emerald-500/30' :
+                          s.status === 'RUNNING' ? 'text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 animate-pulse' :
+                            'text-slate-400 bg-slate-800 border border-slate-700'
+                        }`}>
                         {s.status}
                       </span>
                     </div>
@@ -1212,21 +1201,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setHunterSubTab('processes')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
-                  hunterSubTab === 'processes'
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${hunterSubTab === 'processes'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Live Running Processes ({processes.length})
               </button>
               <button
                 onClick={() => setHunterSubTab('network')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
-                  hunterSubTab === 'network'
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${hunterSubTab === 'network'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Active Network Sockets ({network.length})
               </button>
@@ -1256,11 +1243,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <button
                       key={lvl}
                       onClick={() => setProcessRiskFilter(lvl)}
-                      className={`px-2 py-0.5 rounded text-[10px] ${
-                        processRiskFilter === lvl
+                      className={`px-2 py-0.5 rounded text-[10px] ${processRiskFilter === lvl
                           ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                           : 'bg-slate-900 text-slate-400 border border-slate-800'
-                      }`}
+                        }`}
                     >
                       {lvl}
                     </button>
@@ -1300,12 +1286,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                           {p.exe_path || '-'}
                         </td>
                         <td className="px-3 py-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            p.risk_level === 'CRITICAL' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                            p.risk_level === 'HIGH' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
-                            p.risk_level === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                            'bg-slate-800 text-slate-400'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.risk_level === 'CRITICAL' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                              p.risk_level === 'HIGH' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                                p.risk_level === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                  'bg-slate-800 text-slate-400'
+                            }`}>
                             {p.risk_level}
                           </span>
                         </td>
@@ -1331,11 +1316,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <button
                       key={st}
                       onClick={() => setNetworkFilter(st)}
-                      className={`px-2 py-0.5 rounded text-[10px] ${
-                        networkFilter === st
+                      className={`px-2 py-0.5 rounded text-[10px] ${networkFilter === st
                           ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                           : 'bg-slate-900 text-slate-400 border border-slate-800'
-                      }`}
+                        }`}
                     >
                       {st}
                     </button>
@@ -1366,11 +1350,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         <td className="px-3 py-2 text-slate-300">{c.local_ip}:{c.local_port}</td>
                         <td className="px-3 py-2 text-slate-300">{c.remote_ip}:{c.remote_port}</td>
                         <td className="px-3 py-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            c.state === 'ESTABLISHED' ? 'bg-emerald-500/20 text-emerald-300' :
-                            c.state === 'LISTEN' ? 'bg-blue-500/20 text-blue-300' :
-                            'bg-slate-800 text-slate-400'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${c.state === 'ESTABLISHED' ? 'bg-emerald-500/20 text-emerald-300' :
+                              c.state === 'LISTEN' ? 'bg-blue-500/20 text-blue-300' :
+                                'bg-slate-800 text-slate-400'
+                            }`}>
                             {c.state}
                           </span>
                         </td>
@@ -1394,41 +1377,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setInventorySubTab('software')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
-                  inventorySubTab === 'software'
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${inventorySubTab === 'software'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Installed Software ({software.length})
               </button>
               <button
                 onClick={() => setInventorySubTab('startup')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
-                  inventorySubTab === 'startup'
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${inventorySubTab === 'startup'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Startup Persistence ({startup.length})
               </button>
               <button
                 onClick={() => setInventorySubTab('services')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
-                  inventorySubTab === 'services'
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${inventorySubTab === 'services'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Windows Services ({services.length})
               </button>
               <button
                 onClick={() => setInventorySubTab('files')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
-                  inventorySubTab === 'files'
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${inventorySubTab === 'files'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 File Security & Hashes ({trackedFiles.length})
               </button>
@@ -1535,9 +1514,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <td className="px-3.5 py-2 font-bold text-white">{svc.name}</td>
                       <td className="px-3 py-2 text-slate-300">{svc.display_name}</td>
                       <td className="px-3 py-2">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          svc.status === 'running' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                        }`}>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${svc.status === 'running' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                          }`}>
                           {svc.status}
                         </span>
                       </td>
