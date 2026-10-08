@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Radio, Bell, Terminal, AlertTriangle } from 'lucide-react';
+import { Shield, Terminal, AlertTriangle } from 'lucide-react';
 
 interface HeaderProps {
   activeIncidentsCount?: number;

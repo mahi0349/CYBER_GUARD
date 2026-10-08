@@ -795,7 +795,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         <span className="text-slate-400">Signature Age</span>
                         <div className="flex items-center gap-1.5">
                           <strong className="text-slate-200">
-                            {protection?.defender?.signature_age_days === 0 ? 'Today' : `${protection?.defender?.signature_age_days}d ago`}
+                            {protection?.defender?.signature_age_days === undefined || protection?.defender?.signature_age_days === null 
+                              ? 'Today' 
+                              : protection?.defender?.signature_age_days === 0 
+                                ? 'Today' 
+                                : `${protection?.defender?.signature_age_days}d ago`}
                           </strong>
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">
                             CURRENT
