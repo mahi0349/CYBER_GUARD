@@ -7,8 +7,7 @@ import {
   Activity,
   ShieldAlert,
   BarChart3,
-  Sliders,
-  Sparkles
+  Sliders
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -68,39 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
           </nav>
         </div>
 
-        {/* Demo scenarios quick-launcher box */}
-        <div className="p-3 rounded-xl bg-gradient-to-br from-slate-900 to-slate-950 border border-cyan-500/20 shadow-inner">
-          <div className="flex items-center gap-1.5 text-xs font-mono text-cyan-400 font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span>HACKATHON DEMO</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
-            Test the 3 core scenarios: Phishing URL, Deepfake Media, or Account Takeover.
-          </p>
-          <div className="grid grid-cols-1 gap-1.5 font-mono text-[11px]">
-            <button
-              onClick={() => onSelectTab('phishing')}
-              className="px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-cyan-950 hover:text-cyan-300 hover:border-cyan-500/40 border border-slate-700/60 text-slate-300 text-left transition-colors flex items-center justify-between"
-            >
-              <span>1. Phishing Scan</span>
-              <span className="text-red-400 font-bold">94%</span>
-            </button>
-            <button
-              onClick={() => onSelectTab('deepfake')}
-              className="px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-cyan-950 hover:text-cyan-300 hover:border-cyan-500/40 border border-slate-700/60 text-slate-300 text-left transition-colors flex items-center justify-between"
-            >
-              <span>2. Deepfake Scan</span>
-              <span className="text-amber-400 font-bold">87%</span>
-            </button>
-            <button
-              onClick={() => onSelectTab('behavior')}
-              className="px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-cyan-950 hover:text-cyan-300 hover:border-cyan-500/40 border border-slate-700/60 text-slate-300 text-left transition-colors flex items-center justify-between"
-            >
-              <span>3. Takeover Logs</span>
-              <span className="text-red-400 font-bold">91%</span>
-            </button>
-          </div>
-        </div>
+
       </div>
 
       {/* Footer System Spec */}
