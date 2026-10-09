@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Play, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck, Cpu, FolderGit2, Globe, FileCode2, Wrench } from 'lucide-react';
+import { X, Play, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck, Cpu, FolderGit2, Globe, FileCode2, Wrench, Zap } from 'lucide-react';
 import { ScanRecord } from '../../types/commandCenter';
-import { triggerScan } from '../../services/commandCenterApi';
+import { triggerScan, triggerAllScans } from '../../services/commandCenterApi';
 
 interface ScanModalProps {
   isOpen: boolean;
@@ -10,6 +10,8 @@ interface ScanModalProps {
   onScanTriggered: (scan: ScanRecord) => void;
   isAgentOnline: boolean;
   deviceId?: string;
+  isScanningAll?: boolean;
+  onTriggerAll?: () => Promise<void>;
 }
 
 export const ScanModal: React.FC<ScanModalProps> = ({
@@ -18,12 +20,17 @@ export const ScanModal: React.FC<ScanModalProps> = ({
   scans,
   onScanTriggered,
   isAgentOnline,
-  deviceId
+  deviceId,
+  isScanningAll = false,
+  onTriggerAll
 }) => {
   const [loadingType, setLoadingType] = useState<string | null>(null);
+  const [localScanningAll, setLocalScanningAll] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const isAllRunning = isScanningAll || localScanningAll;
 
   const scanOptions = [
     {
@@ -86,6 +93,26 @@ export const ScanModal: React.FC<ScanModalProps> = ({
     }
   };
 
+  const handleLaunchAllScans = async () => {
+    setErrorMsg(null);
+    setLocalScanningAll(true);
+    try {
+      if (onTriggerAll) {
+        await onTriggerAll();
+      } else {
+        const results = await triggerAllScans(deviceId);
+        results.forEach(r => onScanTriggered(r));
+        if (results.some(r => r.status === 'UNAVAILABLE')) {
+          setErrorMsg('Scan unavailable: Endpoint agent is disconnected.');
+        }
+      }
+    } catch (e: any) {
+      setErrorMsg(e?.response?.data?.detail || e.message || 'Failed to trigger simultaneous scans.');
+    } finally {
+      setLocalScanningAll(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#0b101d] border border-cyan-500/40 rounded-xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -127,23 +154,79 @@ export const ScanModal: React.FC<ScanModalProps> = ({
             </div>
           )}
 
+          {/* Quick Scan All Banner & Action */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/60 via-slate-900/90 to-blue-950/60 border border-cyan-500/40 shadow-xl shadow-cyan-950/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-md">
+                <Zap className="w-5 h-5 text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.5)]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold font-mono text-white tracking-wide">QUICK SCAN — ALL VECTORS</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
+                    SIMULTANEOUS
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  Execute all 6 diagnostic scans in parallel across processes, network, persistence, files, and Defender config.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleLaunchAllScans}
+              disabled={isAllRunning || !isAgentOnline}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-mono text-xs font-bold transition-all shrink-0 ${
+                !isAgentOnline
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                  : isAllRunning
+                  ? 'bg-cyan-900/70 text-cyan-200 border border-cyan-400/60 shadow-lg shadow-cyan-950/60 cursor-wait'
+                  : 'bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white border border-cyan-400/50 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 active:scale-95'
+              }`}
+            >
+              {isAllRunning ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-cyan-300" />
+                  <span>EXECUTING ALL SCANS (6/6)...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 text-cyan-200" />
+                  <span>RUN ALL SIMULTANEOUSLY</span>
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Grid of Scanners */}
           <div>
-            <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold mb-3">
-              Available Endpoint Scanners
-            </h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                Available Endpoint Scanners
+              </h4>
+              {isAllRunning && (
+                <div className="flex items-center gap-1.5 text-[11px] font-mono text-cyan-300 animate-pulse">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span>Running all 6 scans in parallel...</span>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {scanOptions.map(opt => {
                 const Icon = opt.icon;
-                const isRunning = loadingType === opt.id;
+                const isRunning = loadingType === opt.id || isAllRunning;
                 return (
                   <div
                     key={opt.id}
-                    className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-cyan-500/30 transition-all flex flex-col justify-between"
+                    className={`p-4 rounded-xl bg-slate-900/60 border transition-all flex flex-col justify-between ${
+                      isRunning ? 'border-cyan-500/60 bg-cyan-950/20' : 'border-slate-800 hover:border-cyan-500/30'
+                    }`}
                   >
                     <div>
                       <div className="flex items-center gap-2.5 mb-2">
-                        <div className="p-1.5 rounded-lg bg-slate-800 text-cyan-400 border border-slate-700">
+                        <div className={`p-1.5 rounded-lg border ${
+                          isRunning ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' : 'bg-slate-800 text-cyan-400 border-slate-700'
+                        }`}>
                           <Icon className="w-4 h-4" />
                         </div>
                         <span className="text-sm font-bold text-slate-200 font-mono">{opt.name}</span>
@@ -160,13 +243,15 @@ export const ScanModal: React.FC<ScanModalProps> = ({
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
                           !isAgentOnline
                             ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                            : isRunning
+                            ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-500/50'
                             : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-md shadow-cyan-950'
                         }`}
                       >
                         {isRunning ? (
                           <>
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            <span>LAUNCHING...</span>
+                            <span>SCANNING...</span>
                           </>
                         ) : (
                           <>
@@ -176,6 +261,7 @@ export const ScanModal: React.FC<ScanModalProps> = ({
                         )}
                       </button>
                     </div>
+
                   </div>
                 );
               })}

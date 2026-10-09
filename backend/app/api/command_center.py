@@ -146,6 +146,12 @@ def get_scans(device_id: Optional[str] = Query(None)):
 async def run_scan(payload: ScanTriggerRequest, device_id: Optional[str] = Query(None)):
     return await endpoint_security_mgr.trigger_scan(payload.scan_type, device_id)
 
+@router.post("/scans/run-all", response_model=List[ScanRecordOut])
+async def run_all_scans(device_id: Optional[str] = Query(None)):
+    """Execute all diagnostic and endpoint scan methods simultaneously."""
+    return await endpoint_security_mgr.trigger_all_scans(device_id)
+
+
 # ----------------- Single-Device Licensing & State -----------------
 @router.get("/device/mode")
 def get_device_mode():

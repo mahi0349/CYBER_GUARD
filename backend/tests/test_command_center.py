@@ -140,3 +140,15 @@ def test_scan_trigger():
     data = resp.json()
     assert "scan_id" in data
     assert data["status"] in ["QUEUED", "UNAVAILABLE", "RUNNING"]
+
+def test_scan_all_trigger():
+    resp = client.post("/api/v1/command-center/scans/run-all")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data, list)
+    assert len(data) == 6
+    for s in data:
+        assert "scan_id" in s
+        assert "scan_type" in s
+        assert s["status"] in ["QUEUED", "UNAVAILABLE", "RUNNING"]
+

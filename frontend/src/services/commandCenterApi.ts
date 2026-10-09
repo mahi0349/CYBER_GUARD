@@ -207,6 +207,21 @@ export const triggerScan = async (scan_type: string, deviceId?: string): Promise
   return res.data;
 };
 
+export const triggerAllScans = async (deviceId?: string): Promise<ScanRecord[]> => {
+  try {
+    const res = await client.post<ScanRecord[]>('/command-center/scans/run-all', {}, {
+      params: deviceId ? { device_id: deviceId } : {}
+    });
+    return res.data;
+  } catch {
+    // Robust fallback: trigger all 6 scan methods concurrently
+    const scanTypes = ['quick', 'process', 'startup', 'network', 'file', 'config'];
+    const results = await Promise.all(scanTypes.map(st => triggerScan(st, deviceId)));
+    return results;
+  }
+};
+
+
 export const fetchRiskScore = async (deviceId?: string): Promise<RiskScore | null> => {
   try {
     const res = await client.get<RiskScore>('/command-center/risk', {

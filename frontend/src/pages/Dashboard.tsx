@@ -32,9 +32,9 @@ import {
   Download,
   Lock,
   PowerOff,
-  AlertCircle,
   Check,
-  Copy
+  Copy,
+  SlidersHorizontal
 } from 'lucide-react';
 import {
   AreaChart,
@@ -74,6 +74,7 @@ import {
   fetchSecurityEvents,
   fetchThreats,
   fetchScans,
+  triggerAllScans,
   fetchRiskScore,
   getCommandCenterWebSocketUrl,
   fetchDeviceMode,
@@ -140,9 +141,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [selectedProcess, setSelectedProcess] = useState<ProcessItem | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<ThreatAlert | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [isScanningAll, setIsScanningAll] = useState(false);
 
   // WebSocket ref
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Quick Scan (All Methods Simultaneously) Handler
+  const handleExecuteQuickScanAll = async () => {
+    if (isScanningAll) return;
+    setIsScanningAll(true);
+    setIsScanModalOpen(true);
+    try {
+      const results = await triggerAllScans(agentStatus?.device_id);
+      if (results && results.length > 0) {
+        setScans(prev => {
+          const existingIds = new Set(prev.map(s => s.scan_id));
+          const newEntries = results.filter(s => !existingIds.has(s.scan_id));
+          return [...newEntries, ...prev];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to execute quick scan all:', err);
+    } finally {
+      setIsScanningAll(false);
+    }
+  };
 
   // Initial Full Load for Single Active Device
   const loadAllData = async () => {
@@ -498,13 +521,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <RefreshCw className="w-4 h-4 text-cyan-400" />
           </button>
 
-          <button
-            onClick={() => setIsScanModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 border border-cyan-400/50 text-xs font-mono font-bold text-white transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/35"
-          >
-            <Zap className="w-4 h-4 text-cyan-200" />
-            <span>EXECUTE SCAN</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleExecuteQuickScanAll}
+              disabled={isScanningAll}
+              title="Automatically run all 6 endpoint security scans simultaneously"
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all shadow-lg ${
+                isScanningAll
+                  ? 'bg-cyan-900/60 border border-cyan-400 text-cyan-200 shadow-cyan-500/30 cursor-wait'
+                  : 'bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 border border-cyan-400/50 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/35 active:scale-95'
+              }`}
+            >
+              {isScanningAll ? (
+                <>
+                  <RefreshCw className="w-4 h-4 text-cyan-200 animate-spin" />
+                  <span>SCANNING ALL VECTORS...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 text-cyan-200 animate-pulse" />
+                  <span>QUICK SCAN (RUN ALL)</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => setIsScanModalOpen(true)}
+              title="Open Endpoint Scan Console & History"
+              className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 text-slate-300 transition-all shadow-sm group"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-slate-400 group-hover:text-cyan-400" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1584,6 +1632,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         }}
         isAgentOnline={isAgentOnline}
         deviceId={agentStatus?.device_id}
+        isScanningAll={isScanningAll}
+        onTriggerAll={handleExecuteQuickScanAll}
       />
 
       <AgentDownloadModal

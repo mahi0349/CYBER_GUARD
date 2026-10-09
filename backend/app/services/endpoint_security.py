@@ -632,5 +632,19 @@ class EndpointSecurityManager:
         await self.broadcast_to_browsers({"type": "scan_update", "scan": scan_record}, device_id=dev.device_id)
         return scan_record
 
+    async def trigger_all_scans(self, device_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Trigger all endpoint scan methods simultaneously."""
+        scan_types = ["quick", "process", "startup", "network", "file", "config"]
+        tasks = [self.trigger_scan(st, device_id) for st in scan_types]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        out = []
+        for r in results:
+            if isinstance(r, dict):
+                out.append(r)
+            elif isinstance(r, Exception):
+                logger.error(f"Error during simultaneous scan: {r}")
+        return out
+
+
 
 endpoint_security_mgr = EndpointSecurityManager()
