@@ -28,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
   ];
 
   return (
-    <aside className="w-64 border-r border-slate-800/80 bg-[#070a12]/95 flex flex-col justify-between p-4 shrink-0 min-h-[calc(100vh-4rem)]">
+    <aside className="w-64 border-r border-slate-800/80 bg-[#070a12]/95 flex flex-col justify-between p-4 shrink-0 h-full overflow-hidden select-none">
       <div className="space-y-6">
         <div>
           <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400 px-3 mb-2 font-semibold">

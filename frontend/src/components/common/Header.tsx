@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeIncidentsCount = 23 }) => {
   return (
-    <header className="h-16 border-b border-slate-800/80 bg-[#0a0f1d]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
+    <header className="h-16 border-b border-slate-800/80 bg-[#0a0f1d]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50 shrink-0">
       {/* Brand & Status */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2.5">

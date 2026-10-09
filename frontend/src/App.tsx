@@ -39,11 +39,11 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col cyber-grid-bg">
+    <div className="h-screen w-screen overflow-hidden bg-[#080b11] text-slate-100 flex flex-col cyber-grid-bg">
       <Header activeIncidentsCount={3} />
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         <Sidebar currentTab={currentTab} onSelectTab={setCurrentTab} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-[1720px] mx-auto w-full">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 max-w-[1720px] mx-auto w-full min-h-0">
           {renderContent()}
         </main>
       </div>
