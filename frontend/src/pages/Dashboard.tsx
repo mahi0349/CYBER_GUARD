@@ -436,16 +436,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             {/* Host telemetry pills */}
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono mt-2">
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
-                Active Machine: <strong className="text-cyan-300 font-semibold">{agentStatus?.hostname || 'Not Connected'}</strong>
+                Active Machine: <strong className={isAgentOnline ? "text-cyan-300 font-semibold" : "text-slate-500 font-semibold"}>
+                  {isAgentOnline
+                    ? (agentStatus?.hostname || 'Connected Host')
+                    : 'None (Offline)'}
+                </strong>
               </span>
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300">
-                OS: <strong className="text-slate-100 font-semibold">{agentStatus?.os_name || 'Windows'} {agentStatus?.os_version || ''}</strong>
+                OS: <strong className={isAgentOnline ? "text-slate-100 font-semibold" : "text-slate-500 font-semibold"}>
+                  {isAgentOnline ? `${agentStatus?.os_name || 'Windows'} ${agentStatus?.os_version || ''}` : 'None (Standby)'}
+                </strong>
               </span>
               <span className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-300 flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                <span className={`h-1.5 w-1.5 rounded-full ${isAgentOnline ? 'bg-cyan-400 animate-pulse' : 'bg-red-500'}`}></span>
                 <span>Telemetry Sync:</span>
-                <strong className={agentStatus?.telemetry_age_seconds && agentStatus.telemetry_age_seconds > 15 ? 'text-amber-400' : 'text-emerald-400 font-semibold'}>
-                  {agentStatus?.telemetry_age_seconds !== null && agentStatus?.telemetry_age_seconds !== undefined ? `${agentStatus.telemetry_age_seconds}s ago` : '0s'}
+                <strong className={isAgentOnline ? (agentStatus?.telemetry_age_seconds && agentStatus.telemetry_age_seconds > 15 ? 'text-amber-400' : 'text-emerald-400 font-semibold') : 'text-red-400 font-semibold'}>
+                  {isAgentOnline
+                    ? `${agentStatus?.telemetry_age_seconds !== null && agentStatus?.telemetry_age_seconds !== undefined ? `${agentStatus.telemetry_age_seconds}s ago` : '0s'}`
+                    : 'OFFLINE (Paused)'}
                 </strong>
               </span>
 
@@ -635,25 +643,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* 1. Risk Score Cockpit (5 cols) */}
             {(() => {
-              const score = riskScore?.score ?? 0;
+              const score = isAgentOnline ? (riskScore?.score ?? 0) : 0;
               const radius = 46;
               const circumference = 2 * Math.PI * radius;
-              const strokeDashoffset = circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference;
+              const strokeDashoffset = isAgentOnline
+                ? circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference
+                : circumference;
 
-              const isCritical = score >= 70;
-              const isHigh = score >= 40 && score < 70;
-              const isLow = score > 0 && score < 40;
-              const isSafe = score === 0;
+              const isCritical = isAgentOnline && score >= 70;
+              const isHigh = isAgentOnline && score >= 40 && score < 70;
+              const isLow = isAgentOnline && score > 0 && score < 40;
+              const isSafe = isAgentOnline && score === 0;
 
-              const strokeColor = isCritical ? '#ef4444' : isHigh ? '#f59e0b' : isLow ? '#06b6d4' : '#10b981';
-              const glowColor = isCritical ? 'rgba(239,68,68,0.5)' : isHigh ? 'rgba(245,158,11,0.5)' : isLow ? 'rgba(6,182,212,0.5)' : 'rgba(16,185,129,0.5)';
-              const badgeStyle = isCritical
-                ? 'bg-red-500/20 text-red-300 border-red-500/50 shadow-red-950/50'
-                : isHigh
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
-                  : isLow
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-cyan-950/50'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50';
+              const strokeColor = !isAgentOnline ? '#475569' : isCritical ? '#ef4444' : isHigh ? '#f59e0b' : isLow ? '#06b6d4' : '#10b981';
+              const glowColor = !isAgentOnline ? 'transparent' : isCritical ? 'rgba(239,68,68,0.5)' : isHigh ? 'rgba(245,158,11,0.5)' : isLow ? 'rgba(6,182,212,0.5)' : 'rgba(16,185,129,0.5)';
+              const badgeStyle = !isAgentOnline
+                ? 'bg-slate-800/60 text-slate-400 border-slate-700/60 shadow-none'
+                : isCritical
+                  ? 'bg-red-500/20 text-red-300 border-red-500/50 shadow-red-950/50'
+                  : isHigh
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
+                    : isLow
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-cyan-950/50'
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50';
 
               return (
                 <div className="lg:col-span-5 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/90 to-[#070b16]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl group transition-all duration-300">
@@ -669,7 +681,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         <span>ENDPOINT SECURITY RISK INDEX</span>
                       </span>
                       <span className={`text-[11px] font-mono px-3 py-1 rounded-full border uppercase font-extrabold shadow-sm ${badgeStyle}`}>
-                        {riskScore?.level || 'SAFE'}
+                        {isAgentOnline ? (riskScore?.level || 'SAFE') : 'STANDBY (OFFLINE)'}
                       </span>
                     </div>
 
@@ -702,26 +714,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                           <span className="text-3xl font-black font-mono tracking-tight text-white leading-none">
-                            {score}
+                            {isAgentOnline ? score : '--'}
                           </span>
                           <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-1">
-                            / 100
+                            {isAgentOnline ? '/ 100' : 'OFFLINE'}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-2 text-center sm:text-left">
                         <div className="flex items-center justify-center sm:justify-start gap-2">
-                          <span className={`h-2.5 w-2.5 rounded-full ${isSafe ? 'bg-emerald-400 animate-pulse' : isLow ? 'bg-cyan-400' : isHigh ? 'bg-amber-400' : 'bg-red-400'}`}></span>
+                          <span className={`h-2.5 w-2.5 rounded-full ${!isAgentOnline ? 'bg-slate-500' : isSafe ? 'bg-emerald-400 animate-pulse' : isLow ? 'bg-cyan-400' : isHigh ? 'bg-amber-400' : 'bg-red-400'}`}></span>
                           <span className="text-sm font-bold font-mono text-white uppercase tracking-wide">
-                            {isSafe ? 'Optimal Defense' : isLow ? 'Low Anomaly Profile' : isHigh ? 'Suspicious Indicators' : 'Critical Threat Profile'}
+                            {!isAgentOnline ? 'Telemetry Paused' : isSafe ? 'Optimal Defense' : isLow ? 'Low Anomaly Profile' : isHigh ? 'Suspicious Indicators' : 'Critical Threat Profile'}
                           </span>
                         </div>
                         <p className="text-xs text-slate-300 font-mono leading-relaxed">
-                          {riskScore?.summary || 'Endpoint active and protected. Native defenses intact.'}
+                          {!isAgentOnline
+                            ? 'No active agent connected. Continuous telemetry and risk evaluation are on standby until an endpoint connects.'
+                            : (riskScore?.summary || 'Endpoint active and protected. Native defenses intact.')}
                         </p>
                         <div className="text-[11px] font-mono text-slate-400 pt-1">
-                          Evaluated against <strong className="text-cyan-300">{processes.length}</strong> processes & <strong className="text-cyan-300">{network.length}</strong> sockets.
+                          {isAgentOnline
+                            ? <>Evaluated against <strong className="text-cyan-300">{processes.length}</strong> processes & <strong className="text-cyan-300">{network.length}</strong> sockets.</>
+                            : <>Audit paused — awaiting endpoint heartbeat.</>}
                         </div>
                       </div>
                     </div>
@@ -733,11 +749,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                           <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                           <span>Contributing Telemetry Factors</span>
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500">Impact Delta</span>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {isAgentOnline ? 'Impact Delta' : 'Status'}
+                        </span>
                       </div>
 
                       <div className="space-y-1.5 text-xs font-mono">
-                        {riskScore?.contributors && riskScore.contributors.length > 0 ? (
+                        {!isAgentOnline ? (
+                          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 text-center text-slate-400 text-xs">
+                            <div className="flex items-center justify-center gap-2">
+                              <PowerOff className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Telemetry factors paused. Connect an agent to stream live indicators.</span>
+                            </div>
+                          </div>
+                        ) : riskScore?.contributors && riskScore.contributors.length > 0 ? (
                           riskScore.contributors.slice(0, 3).map((c, idx) => (
                             <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800/70 hover:border-slate-700 transition-colors">
                               <div className="flex items-center gap-2 min-w-0 pr-2">
@@ -791,11 +816,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <span>NATIVE WINDOWS DEFENSE CONTROLS</span>
                   </span>
-                  <span className={`text-[11px] font-mono px-3 py-1 rounded-full border uppercase font-extrabold shadow-sm ${protection?.defender?.real_time_protection && protection?.firewall?.all_enabled
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50'
-                      : 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
+                  <span className={`text-[11px] font-mono px-3 py-1 rounded-full border uppercase font-extrabold shadow-sm ${
+                    !isAgentOnline
+                      ? 'bg-slate-800/60 text-slate-400 border-slate-700/60'
+                      : protection?.defender?.real_time_protection && protection?.firewall?.all_enabled
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50'
+                        : 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-950/50'
                     }`}>
-                    {protection?.defender?.real_time_protection && protection?.firewall?.all_enabled ? 'ALL DEFENSES ACTIVE' : 'ACTION REQUIRED'}
+                    {!isAgentOnline
+                      ? 'TELEMETRY PAUSED (OFFLINE)'
+                      : protection?.defender?.real_time_protection && protection?.firewall?.all_enabled ? 'ALL DEFENSES ACTIVE' : 'ACTION REQUIRED'}
                   </span>
                 </div>
 
@@ -804,14 +834,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 transition-all space-y-3">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
                       <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <div className={`p-1.5 rounded-lg border ${isAgentOnline ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-slate-800/50 text-slate-500 border-slate-700/50'}`}>
                           <ShieldCheck className="w-4 h-4" />
                         </div>
                         <span className="font-bold text-sm text-slate-100 font-mono">Microsoft Defender</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${protection?.defender?.real_time_protection ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        !isAgentOnline
+                          ? 'bg-slate-800/60 text-slate-400 border border-slate-700/50'
+                          : protection?.defender?.real_time_protection
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-red-500/20 text-red-300 border border-red-500/30'
                         }`}>
-                        {protection?.defender?.real_time_protection ? 'PROTECTED' : 'DISABLED'}
+                        {!isAgentOnline ? 'OFFLINE' : protection?.defender?.real_time_protection ? 'PROTECTED' : 'DISABLED'}
                       </span>
                     </div>
 
@@ -819,9 +854,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
                         <span className="text-slate-400">Real-Time Engine</span>
                         <div className="flex items-center gap-1.5">
-                          <span className={`h-2 w-2 rounded-full ${protection?.defender?.real_time_protection ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}></span>
-                          <strong className={protection?.defender?.real_time_protection ? 'text-emerald-300 font-bold' : 'text-red-400 font-bold'}>
-                            {protection?.defender?.real_time_protection ? 'ACTIVE & MONITORING' : 'OFF'}
+                          <span className={`h-2 w-2 rounded-full ${!isAgentOnline ? 'bg-slate-600' : protection?.defender?.real_time_protection ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}></span>
+                          <strong className={!isAgentOnline ? 'text-slate-400 font-bold' : protection?.defender?.real_time_protection ? 'text-emerald-300 font-bold' : 'text-red-400 font-bold'}>
+                            {!isAgentOnline ? 'STREAM PAUSED (OFFLINE)' : protection?.defender?.real_time_protection ? 'ACTIVE & MONITORING' : 'OFF'}
                           </strong>
                         </div>
                       </div>
@@ -829,7 +864,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
                         <span className="text-slate-400">Definitions Version</span>
                         <strong className="text-cyan-300 font-mono px-2 py-0.5 rounded bg-cyan-950/40 border border-cyan-800/40">
-                          v{protection?.defender?.signature_version || '1.459.574.0'}
+                          {isAgentOnline ? `v${protection?.defender?.signature_version || '1.459.574.0'}` : 'Awaiting Endpoint'}
                         </strong>
                       </div>
 
@@ -837,14 +872,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         <span className="text-slate-400">Signature Age</span>
                         <div className="flex items-center gap-1.5">
                           <strong className="text-slate-200">
-                            {protection?.defender?.signature_age_days === undefined || protection?.defender?.signature_age_days === null
-                              ? 'Today'
-                              : protection?.defender?.signature_age_days === 0
+                            {!isAgentOnline
+                              ? 'Offline'
+                              : protection?.defender?.signature_age_days === undefined || protection?.defender?.signature_age_days === null
                                 ? 'Today'
                                 : `${protection?.defender?.signature_age_days}d ago`}
                           </strong>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">
-                            CURRENT
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${
+                            isAgentOnline
+                              ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                              : 'bg-slate-800/60 text-slate-500 border border-slate-700/50'
+                          }`}>
+                            {isAgentOnline ? 'CURRENT' : 'STANDBY'}
                           </span>
                         </div>
                       </div>
@@ -852,8 +891,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
                         <span className="text-slate-400">Behavior Monitor</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-                          <strong className="text-emerald-300 font-bold">ACTIVE</strong>
+                          <span className={`h-2 w-2 rounded-full ${isAgentOnline ? 'bg-emerald-400' : 'bg-slate-600'}`}></span>
+                          <strong className={isAgentOnline ? 'text-emerald-300 font-bold' : 'text-slate-400 font-bold'}>
+                            {isAgentOnline ? 'ACTIVE' : 'OFFLINE'}
+                          </strong>
                         </div>
                       </div>
                     </div>
@@ -863,34 +904,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-cyan-500/40 transition-all space-y-3">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
                       <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                        <div className={`p-1.5 rounded-lg border ${isAgentOnline ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'bg-slate-800/50 text-slate-500 border-slate-700/50'}`}>
                           <Shield className="w-4 h-4" />
                         </div>
                         <span className="font-bold text-sm text-slate-100 font-mono">Windows Firewall</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${protection?.firewall?.all_enabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        !isAgentOnline
+                          ? 'bg-slate-800/60 text-slate-400 border border-slate-700/50'
+                          : protection?.firewall?.all_enabled
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                         }`}>
-                        {protection?.firewall?.all_enabled ? 'ALL PROFILES ON' : 'PARTIAL'}
+                        {!isAgentOnline ? 'OFFLINE' : protection?.firewall?.all_enabled ? 'ALL PROFILES ON' : 'PARTIAL'}
                       </span>
                     </div>
 
                     <div className="space-y-2 text-xs font-mono">
                       <div className="grid grid-cols-3 gap-2 pt-1">
                         {['Domain', 'Private', 'Public'].map(prof => {
-                          const isEnabled = protection?.firewall?.profiles?.[prof]?.enabled ?? false;
+                          const isEnabled = isAgentOnline && (protection?.firewall?.profiles?.[prof]?.enabled ?? false);
                           return (
                             <div
                               key={prof}
-                              className={`p-2.5 rounded-xl border text-center transition-all ${isEnabled
-                                  ? 'bg-emerald-950/25 border-emerald-500/30 hover:border-emerald-500/60'
-                                  : 'bg-red-950/20 border-red-500/30 hover:border-red-500/50'
+                              className={`p-2.5 rounded-xl border text-center transition-all ${
+                                !isAgentOnline
+                                  ? 'bg-slate-900/50 border-slate-800/60'
+                                  : isEnabled
+                                    ? 'bg-emerald-950/25 border-emerald-500/30 hover:border-emerald-500/60'
+                                    : 'bg-red-950/20 border-red-500/30 hover:border-red-500/50'
                                 }`}
                             >
                               <span className="text-[11px] text-slate-300 block font-semibold">{prof}</span>
                               <div className="flex items-center justify-center gap-1 mt-1">
-                                <span className={`h-1.5 w-1.5 rounded-full ${isEnabled ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
-                                <span className={`text-[11px] font-bold ${isEnabled ? 'text-emerald-300' : 'text-red-400'}`}>
-                                  {isEnabled ? 'ACTIVE' : 'OFF'}
+                                <span className={`h-1.5 w-1.5 rounded-full ${!isAgentOnline ? 'bg-slate-600' : isEnabled ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                                <span className={`text-[11px] font-bold ${!isAgentOnline ? 'text-slate-400' : isEnabled ? 'text-emerald-300' : 'text-red-400'}`}>
+                                  {!isAgentOnline ? 'STANDBY' : isEnabled ? 'ACTIVE' : 'OFF'}
                                 </span>
                               </div>
                             </div>
@@ -900,12 +949,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
                       <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800/60 flex items-center justify-between text-[11px]">
                         <span className="text-slate-400">Inspection Filter:</span>
-                        <span className="text-emerald-300 font-semibold">Stateful Inbound/Outbound</span>
+                        <span className={isAgentOnline ? "text-emerald-300 font-semibold" : "text-slate-400"}>
+                          {isAgentOnline ? 'Stateful Inbound/Outbound' : 'Telemetry Paused'}
+                        </span>
                       </div>
 
                       <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800/60 flex items-center justify-between text-[11px]">
                         <span className="text-slate-400">Default Inbound Action:</span>
-                        <span className="text-cyan-300 font-mono font-semibold">BLOCK UNLISTED</span>
+                        <span className={isAgentOnline ? "text-cyan-300 font-mono font-semibold" : "text-slate-400 font-mono"}>
+                          {isAgentOnline ? 'BLOCK UNLISTED' : 'Telemetry Paused'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -915,19 +968,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3 text-center font-mono text-[11px]">
                   <div className="p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                     <span className="text-slate-400 block text-[10px]">WMI Sensor</span>
-                    <span className="text-emerald-300 font-bold mt-0.5 block">CONNECTED</span>
+                    <span className={`font-bold mt-0.5 block ${isAgentOnline ? 'text-emerald-300' : 'text-slate-500'}`}>
+                      {isAgentOnline ? 'CONNECTED' : 'DISCONNECTED'}
+                    </span>
                   </div>
                   <div className="p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                     <span className="text-slate-400 block text-[10px]">Tamper Guard</span>
-                    <span className="text-emerald-300 font-bold mt-0.5 block">ENABLED</span>
+                    <span className={`font-bold mt-0.5 block ${isAgentOnline ? 'text-emerald-300' : 'text-slate-500'}`}>
+                      {isAgentOnline ? 'ENABLED' : 'STANDBY'}
+                    </span>
                   </div>
                   <div className="p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                     <span className="text-slate-400 block text-[10px]">Audit Polling</span>
-                    <span className="text-cyan-300 font-bold mt-0.5 block">8s ACTIVE</span>
+                    <span className={`font-bold mt-0.5 block ${isAgentOnline ? 'text-cyan-300' : 'text-slate-500'}`}>
+                      {isAgentOnline ? '8s ACTIVE' : 'PAUSED'}
+                    </span>
                   </div>
                   <div className="p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                     <span className="text-slate-400 block text-[10px]">Cloud Protection</span>
-                    <span className="text-emerald-300 font-bold mt-0.5 block">ENGAGED</span>
+                    <span className={`font-bold mt-0.5 block ${isAgentOnline ? 'text-emerald-300' : 'text-slate-500'}`}>
+                      {isAgentOnline ? 'ENGAGED' : 'STANDBY'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -977,18 +1038,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
                   <div className="mt-4 flex items-baseline justify-between">
                     <span className="text-3xl lg:text-4xl font-black font-mono tracking-tight text-white">
-                      {cpuPercent}%
+                      {isAgentOnline ? `${cpuPercent}%` : '0%'}
                     </span>
                     <span className="text-xs font-mono text-slate-400">
-                      Load: <strong className={cpuPercent > 80 ? 'text-red-400' : cpuPercent > 50 ? 'text-amber-400' : 'text-emerald-400'}>{cpuPercent > 80 ? 'High' : cpuPercent > 50 ? 'Moderate' : 'Optimal'}</strong>
+                      Load: <strong className={!isAgentOnline ? 'text-slate-500 font-semibold' : cpuPercent > 80 ? 'text-red-400' : cpuPercent > 50 ? 'text-amber-400' : 'text-emerald-400'}>{!isAgentOnline ? 'Offline' : cpuPercent > 80 ? 'High' : cpuPercent > 50 ? 'Moderate' : 'Optimal'}</strong>
                     </span>
                   </div>
 
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-slate-700/50 mt-3">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500 shadow-sm shadow-cyan-500/50"
-                      style={{ width: `${Math.min(100, Math.max(4, cpuPercent))}%` }}
+                      className={`h-full rounded-full transition-all duration-500 shadow-sm ${isAgentOnline ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-cyan-500/50' : 'bg-slate-700'}`}
+                      style={{ width: `${isAgentOnline ? Math.min(100, Math.max(4, cpuPercent)) : 0}%` }}
                     />
                   </div>
                 </div>
@@ -1004,27 +1065,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <span>RAM Memory</span>
                     </span>
                     <span className="text-xs font-mono text-emerald-300 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25">
-                      {ramTotalGb} GB Total
+                      {isAgentOnline ? `${ramTotalGb} GB Total` : 'Offline'}
                     </span>
                   </div>
 
                   <div className="mt-4 flex items-baseline justify-between">
                     <span className="text-3xl lg:text-4xl font-black font-mono tracking-tight text-white">
-                      {ramPercent}%
+                      {isAgentOnline ? `${ramPercent}%` : '0%'}
                     </span>
                     <span className="text-xs font-mono text-slate-300">
-                      {ramUsedGb} GB Used
+                      {isAgentOnline ? `${ramUsedGb} GB Used` : 'Offline (Standby)'}
                     </span>
                   </div>
 
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-slate-700/50 mt-3">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 shadow-sm ${ramPercent > 85
+                      className={`h-full rounded-full transition-all duration-500 shadow-sm ${!isAgentOnline ? 'bg-slate-700' : ramPercent > 85
                           ? 'bg-gradient-to-r from-amber-500 to-red-500 shadow-red-500/50'
                           : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 shadow-emerald-500/50'
                         }`}
-                      style={{ width: `${Math.min(100, Math.max(4, ramPercent))}%` }}
+                      style={{ width: `${isAgentOnline ? Math.min(100, Math.max(4, ramPercent)) : 0}%` }}
                     />
                   </div>
                 </div>
@@ -1040,7 +1101,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <span>Network I/O</span>
                     </span>
                     <span className="text-xs font-mono text-purple-300 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/25">
-                      {network.length} Sockets
+                      {isAgentOnline ? `${network.length} Sockets` : 'Offline'}
                     </span>
                   </div>
 
@@ -1048,22 +1109,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <div className="p-2 rounded-xl bg-slate-950/70 border border-slate-800/80">
                       <span className="text-[10px] font-mono text-slate-400 block">Outbound</span>
                       <span className="text-sm lg:text-base font-bold font-mono text-cyan-300 mt-0.5 block truncate">
-                        ▲ {netSentKb} KB/s
+                        ▲ {isAgentOnline ? netSentKb : 0} KB/s
                       </span>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-950/70 border border-slate-800/80">
                       <span className="text-[10px] font-mono text-slate-400 block">Inbound</span>
                       <span className="text-sm lg:text-base font-bold font-mono text-emerald-300 mt-0.5 block truncate">
-                        ▼ {netRecvKb} KB/s
+                        ▼ {isAgentOnline ? netRecvKb : 0} KB/s
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-2 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-                    <span>Continuous Socket Audit</span>
-                    <span className="text-emerald-400 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      Stream Live
+                    <span>Socket Telemetry</span>
+                    <span className={isAgentOnline ? "text-emerald-400 flex items-center gap-1" : "text-slate-500 flex items-center gap-1"}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${isAgentOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}></span>
+                      {isAgentOnline ? 'Stream Live' : 'Stream Paused (Offline)'}
                     </span>
                   </div>
                 </div>
@@ -1078,23 +1139,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       </div>
                       <span>Host Uptime</span>
                     </span>
-                    <span className="text-xs font-mono text-emerald-300 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      Healthy
+                    <span className={`text-xs font-mono px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 ${
+                      isAgentOnline
+                        ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25'
+                        : 'text-slate-400 bg-slate-800/40 border-slate-700/50'
+                    }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${isAgentOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-500'}`}></span>
+                      {isAgentOnline ? 'Healthy' : 'Host Offline'}
                     </span>
                   </div>
 
                   <div className="mt-4 flex items-baseline justify-between">
                     <span className="text-2xl lg:text-3xl font-black font-mono tracking-tight text-white">
-                      {telemetry?.uptime_seconds ? formatUptime(telemetry.uptime_seconds) : 'N/A'}
+                      {isAgentOnline && telemetry?.uptime_seconds ? formatUptime(telemetry.uptime_seconds) : 'N/A'}
                     </span>
                     <span className="text-xs font-mono text-slate-400">
-                      100% Availability
+                      {isAgentOnline ? '100% Availability' : 'Disconnected (Standby)'}
                     </span>
                   </div>
 
                   <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-slate-700/50 mt-3">
-                    <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-400 w-full" />
+                    <div className={`h-full rounded-full ${isAgentOnline ? 'bg-gradient-to-r from-amber-500 to-emerald-400 w-full' : 'bg-slate-700 w-0'}`} />
                   </div>
                 </div>
               </div>
@@ -1120,40 +1185,50 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               {threats.length === 0 ? (
                 <div className="p-7 rounded-2xl bg-slate-950/70 border border-slate-800/80 text-center my-2 relative overflow-hidden">
                   <div className="relative z-10">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-950">
-                      <CheckCircle2 className="w-8 h-8" />
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg ${
+                      isAgentOnline
+                        ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-emerald-950'
+                        : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 shadow-slate-950'
+                    }`}>
+                      {isAgentOnline ? <CheckCircle2 className="w-8 h-8" /> : <PowerOff className="w-8 h-8" />}
                     </div>
                     <h3 className="text-base font-bold font-mono text-white">
-                      ZERO ACTIVE THREATS IDENTIFIED
+                      {isAgentOnline ? 'ZERO ACTIVE THREATS IDENTIFIED' : 'TELEMETRY STREAM PAUSED (OFFLINE)'}
                     </h3>
                     <p className="text-xs font-mono text-slate-400 max-w-xl mx-auto mt-1 leading-relaxed">
-                      Continuous real-time behavioral monitoring active. All process memory spaces, registry startup keys, and socket connections match certified benign baselines.
+                      {isAgentOnline
+                        ? 'Continuous real-time behavioral monitoring active. All process memory spaces, registry startup keys, and socket connections match certified benign baselines.'
+                        : 'Endpoint agent is not streaming data. Start the agent in your terminal to stream Defender alerts, firewall state, and behavioral anomaly telemetry.'}
                     </p>
 
-                    {/* 4 Active Assurance Badges */}
+                    {/* 4 Assurance Badges */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-5 max-w-2xl mx-auto text-left">
                       <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80">
                         <span className="text-[10px] font-mono text-slate-400 block">Process Execution</span>
-                        <span className="text-xs font-bold font-mono text-emerald-300 mt-0.5 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Safe ({processes.length})
+                        <span className={`text-xs font-bold font-mono mt-0.5 flex items-center gap-1 ${isAgentOnline ? 'text-emerald-300' : 'text-slate-400'}`}>
+                          {isAgentOnline ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <span className="h-2 w-2 rounded-full bg-slate-600"></span>}
+                          {isAgentOnline ? `Safe (${processes.length})` : 'Paused (Offline)'}
                         </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80">
                         <span className="text-[10px] font-mono text-slate-400 block">Socket Flow</span>
-                        <span className="text-xs font-bold font-mono text-emerald-300 mt-0.5 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Monitored ({network.length})
+                        <span className={`text-xs font-bold font-mono mt-0.5 flex items-center gap-1 ${isAgentOnline ? 'text-emerald-300' : 'text-slate-400'}`}>
+                          {isAgentOnline ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <span className="h-2 w-2 rounded-full bg-slate-600"></span>}
+                          {isAgentOnline ? `Monitored (${network.length})` : 'Paused (Offline)'}
                         </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80">
                         <span className="text-[10px] font-mono text-slate-400 block">Startup Persistence</span>
-                        <span className="text-xs font-bold font-mono text-emerald-300 mt-0.5 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Clean
+                        <span className={`text-xs font-bold font-mono mt-0.5 flex items-center gap-1 ${isAgentOnline ? 'text-emerald-300' : 'text-slate-400'}`}>
+                          {isAgentOnline ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <span className="h-2 w-2 rounded-full bg-slate-600"></span>}
+                          {isAgentOnline ? 'Clean' : 'Paused (Offline)'}
                         </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80">
                         <span className="text-[10px] font-mono text-slate-400 block">Defender Engine</span>
-                        <span className="text-xs font-bold font-mono text-emerald-300 mt-0.5 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Active
+                        <span className={`text-xs font-bold font-mono mt-0.5 flex items-center gap-1 ${isAgentOnline ? 'text-emerald-300' : 'text-slate-400'}`}>
+                          {isAgentOnline ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <span className="h-2 w-2 rounded-full bg-slate-600"></span>}
+                          {isAgentOnline ? 'Active' : 'Offline'}
                         </span>
                       </div>
                     </div>
@@ -1254,7 +1329,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     : 'text-slate-400 hover:text-white'
                   }`}
               >
-                Live Running Processes ({processes.length})
+                {isAgentOnline ? `Live Running Processes (${processes.length})` : `Running Processes (0) [Offline]`}
               </button>
               <button
                 onClick={() => setHunterSubTab('network')}
@@ -1263,7 +1338,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     : 'text-slate-400 hover:text-white'
                   }`}
               >
-                Active Network Sockets ({network.length})
+                {isAgentOnline ? `Active Network Sockets (${network.length})` : `Network Sockets (0) [Offline]`}
               </button>
             </div>
 
@@ -1279,6 +1354,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               />
             </div>
           </div>
+
+          {!isAgentOnline && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Endpoint Agent Offline — Live process and network telemetry feeds are paused. Connect an agent to stream active processes and sockets.</span>
+              </div>
+            </div>
+          )}
 
           {/* Processes Sub-view */}
           {hunterSubTab === 'processes' && (

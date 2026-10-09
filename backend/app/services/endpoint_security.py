@@ -27,6 +27,7 @@ class DeviceState:
             "registered_at": datetime.datetime.utcnow().isoformat(),
             "last_telemetry_at": None
         }
+        self.is_connected: bool = False
         self.last_telemetry_time: Optional[datetime.datetime] = None
         self.system_telemetry: Optional[Dict[str, Any]] = None
         self.telemetry_history: List[Dict[str, Any]] = []
@@ -47,7 +48,7 @@ class DeviceState:
 
     def get_status(self) -> Dict[str, Any]:
         now = datetime.datetime.utcnow()
-        if not self.last_telemetry_time:
+        if not self.is_connected or not self.last_telemetry_time:
             status = "OFFLINE"
             age = None
         else:
@@ -163,6 +164,7 @@ class EndpointSecurityManager:
 
         if target_id in self.devices:
             self.devices[target_id].device_info["status"] = "OFFLINE"
+            self.devices[target_id].is_connected = False
             self.devices[target_id].last_telemetry_time = None
 
         prev_id = self.active_device_id
@@ -177,12 +179,13 @@ class EndpointSecurityManager:
     def get_device_mode_info(self) -> Dict[str, Any]:
         active_dev = self.devices.get(self.active_device_id) if self.active_device_id else None
         st = active_dev.get_status() if active_dev else None
+        is_online = st.get("status") in ("ONLINE", "DEGRADED") if st else False
         return {
             "mode": "SINGLE_DEVICE",
             "max_allowed": 1,
             "is_locked": self.active_device_id is not None and len(self.agent_sockets) > 0,
-            "active_device_id": self.active_device_id,
-            "active_hostname": st.get("hostname") if st else None,
+            "active_device_id": self.active_device_id if is_online else None,
+            "active_hostname": st.get("hostname") if is_online else None,
             "active_status": st.get("status") if st else "OFFLINE",
             "blocked_attempts_count": len(self.blocked_attempts),
             "recent_blocked_attempts": self.blocked_attempts[-5:]
@@ -359,19 +362,26 @@ class EndpointSecurityManager:
         """Send complete baseline state to newly connected browser client."""
         try:
             dev = self.get_device(device_id)
+            st = dev.get_status()
+            is_offline = st.get("status") == "OFFLINE"
             payload = {
                 "type": "init_state",
                 "device_id": dev.device_id,
-                "status": dev.get_status(),
-                "telemetry": dev.system_telemetry,
-                "telemetry_history": dev.telemetry_history[-35:],
-                "risk": dev.get_risk(),
+                "status": st,
+                "telemetry": None if is_offline else dev.system_telemetry,
+                "telemetry_history": [] if is_offline else dev.telemetry_history[-35:],
+                "risk": {
+                    "score": 0,
+                    "level": "OFFLINE",
+                    "summary": "Agent is offline. Telemetry stream is paused awaiting endpoint connection.",
+                    "contributors": []
+                } if is_offline else dev.get_risk(),
                 "protection": {
-                    "defender": dev.defender_status,
-                    "firewall": dev.firewall_status
+                    "defender": {"available": False, "status": "OFFLINE", "real_time_protection": False} if is_offline else dev.defender_status,
+                    "firewall": {"available": False, "status": "OFFLINE", "all_enabled": False, "profiles": {}} if is_offline else dev.firewall_status
                 },
-                "processes": dev.processes[:150],
-                "network": dev.network_conns[:150],
+                "processes": [] if is_offline else dev.processes[:150],
+                "network": [] if is_offline else dev.network_conns[:150],
                 "threats": dev.threat_alerts[:25],
                 "events": dev.security_events[:30],
                 "file_events": dev.file_events[:20],
@@ -388,6 +398,7 @@ class EndpointSecurityManager:
     # ---------------- Agent Ingestion ----------------
     async def process_agent_message(self, msg_type: str, device_id: str, data: Any):
         dev = self.get_or_create_device(device_id)
+        dev.is_connected = True
         dev.last_telemetry_time = datetime.datetime.utcnow()
         self.active_device_id = device_id
 

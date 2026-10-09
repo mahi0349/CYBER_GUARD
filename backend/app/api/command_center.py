@@ -278,6 +278,9 @@ async def agent_websocket(websocket: WebSocket, token: Optional[str] = Query(Non
         logger.info(f"Endpoint Agent disconnected: {dev_id}")
         endpoint_security_mgr.agent_sockets.pop(dev_id, None)
         dev = endpoint_security_mgr.get_device(dev_id)
+        dev.is_connected = False
+        dev.last_telemetry_time = None
+        dev.device_info["status"] = "OFFLINE"
         await endpoint_security_mgr.broadcast_to_browsers({
             "type": "status_update",
             "status": dev.get_status()
@@ -285,4 +288,12 @@ async def agent_websocket(websocket: WebSocket, token: Optional[str] = Query(Non
     except Exception as e:
         logger.warning(f"Agent websocket exception: {e}")
         endpoint_security_mgr.agent_sockets.pop(dev_id, None)
+        dev = endpoint_security_mgr.get_device(dev_id)
+        dev.is_connected = False
+        dev.last_telemetry_time = None
+        dev.device_info["status"] = "OFFLINE"
+        await endpoint_security_mgr.broadcast_to_browsers({
+            "type": "status_update",
+            "status": dev.get_status()
+        }, device_id=dev_id)
 
