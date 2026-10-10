@@ -668,11 +668,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/50';
 
               return (
-                <div className="lg:col-span-5 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/90 to-[#070b16]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl group transition-all duration-300">
+                <div className="lg:col-span-5 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/95 to-[#070b16]/98 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden group transition-colors duration-200">
                   {/* Top glowing cyber accent line */}
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
                   {/* Ambient background glow */}
-                  <div className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/15 transition-all"></div>
+                  <div className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl group-hover:opacity-80 transition-opacity duration-300"></div>
 
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -804,11 +804,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             })()}
 
             {/* 2. Combined Host Protection Controls (7 cols) */}
-            <div className="lg:col-span-7 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/90 to-[#070b16]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl group transition-all duration-300">
+            <div className="lg:col-span-7 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/95 to-[#070b16]/98 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden group transition-colors duration-200">
               {/* Top glowing cyber accent line */}
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
               {/* Ambient background glow */}
-              <div className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/15 transition-all"></div>
+              <div className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl group-hover:opacity-80 transition-opacity duration-300"></div>
 
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -831,7 +831,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Defender Box */}
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 transition-all space-y-3">
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 transition-colors duration-200 space-y-3">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
                       <div className="flex items-center gap-2">
                         <div className={`p-1.5 rounded-lg border ${isAgentOnline ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-slate-800/50 text-slate-500 border-slate-700/50'}`}>
@@ -901,7 +901,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Firewall Box */}
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-cyan-500/40 transition-all space-y-3">
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-cyan-500/40 transition-colors duration-200 space-y-3">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
                       <div className="flex items-center gap-2">
                         <div className={`p-1.5 rounded-lg border ${isAgentOnline ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'bg-slate-800/50 text-slate-500 border-slate-700/50'}`}>
@@ -1022,7 +1022,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             return (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
                 {/* 1. CPU Load Card */}
-                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-all duration-300">
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-colors duration-200">
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
@@ -1055,7 +1055,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* 2. RAM Memory Card */}
-                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-emerald-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-all duration-300">
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-emerald-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-colors duration-200">
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
@@ -1091,7 +1091,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* 3. Network I/O Card */}
-                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-purple-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-all duration-300">
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-purple-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-colors duration-200">
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
@@ -1130,7 +1130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* 4. Host Uptime Card */}
-                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-amber-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-all duration-300">
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-[#070b14]/95 border border-slate-800/80 hover:border-amber-500/40 shadow-lg shadow-black/40 relative overflow-hidden group transition-colors duration-200">
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
@@ -1169,7 +1169,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           {/* ================= THREAT ALERTS & DIAGNOSTIC SCANS ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Active Threats (8 cols) */}
-            <div className="lg:col-span-8 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/90 to-[#070b16]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 relative overflow-hidden backdrop-blur-xl group transition-all duration-300">
+            <div className="lg:col-span-8 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/95 to-[#070b16]/98 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 relative overflow-hidden group transition-colors duration-200">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
 
               <div className="flex items-center justify-between mb-4">
@@ -1265,7 +1265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
 
             {/* Quick Actions & Recent Scans (4 cols) */}
-            <div className="lg:col-span-4 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/90 to-[#070b16]/95 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden backdrop-blur-xl group transition-all duration-300">
+            <div className="lg:col-span-4 p-6 rounded-2xl bg-gradient-to-b from-slate-900/95 via-[#0b1020]/95 to-[#070b16]/98 border border-slate-800/80 hover:border-cyan-500/40 shadow-xl shadow-black/40 flex flex-col justify-between relative overflow-hidden group transition-colors duration-200">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
 
               <div>
@@ -1386,9 +1386,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto">
+              <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto smooth-scroll overscroll-contain">
                 <table className="w-full text-xs font-mono text-left">
-                  <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800 sticky top-0 z-10 backdrop-blur-sm">
+                  <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="px-3.5 py-2.5">Process Name</th>
                       <th className="px-3.5 py-2.5">PID</th>
@@ -1459,9 +1459,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto">
+              <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto smooth-scroll overscroll-contain">
                 <table className="w-full text-xs font-mono text-left">
-                  <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800 sticky top-0 z-10 backdrop-blur-sm">
+                  <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="px-3.5 py-2.5">Process (PID)</th>
                       <th className="px-3.5 py-2.5">Proto</th>
@@ -1561,9 +1561,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
           {/* Sub-content: Software */}
           {inventorySubTab === 'software' && (
-            <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto">
+            <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto smooth-scroll overscroll-contain">
               <table className="w-full text-xs font-mono text-left">
-                <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800 sticky top-0 z-10 backdrop-blur-sm">
+                <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0 z-10 shadow-sm">
                   <tr>
                     <th className="px-3.5 py-2.5">Application Name</th>
                     <th className="px-3.5 py-2.5">Version</th>
@@ -1593,9 +1593,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
           {/* Sub-content: Startup */}
           {inventorySubTab === 'startup' && (
-            <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto">
+            <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto smooth-scroll overscroll-contain">
               <table className="w-full text-xs font-mono text-left">
-                <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800 sticky top-0 z-10 backdrop-blur-sm">
+                <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0 z-10 shadow-sm">
                   <tr>
                     <th className="px-3.5 py-2.5">Startup Item</th>
                     <th className="px-3.5 py-2.5">Persistence Source</th>
@@ -1629,9 +1629,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
           {/* Sub-content: Services */}
           {inventorySubTab === 'services' && (
-            <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto">
+            <div className="border border-slate-800 rounded-lg overflow-x-auto max-h-[550px] overflow-y-auto smooth-scroll overscroll-contain">
               <table className="w-full text-xs font-mono text-left">
-                <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800 sticky top-0 z-10 backdrop-blur-sm">
+                <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0 z-10 shadow-sm">
                   <tr>
                     <th className="px-3.5 py-2.5">Service Name</th>
                     <th className="px-3.5 py-2.5">Display Title</th>

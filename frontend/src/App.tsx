@@ -43,7 +43,7 @@ export function App() {
       <Header activeIncidentsCount={3} />
       <div className="flex-1 flex overflow-hidden min-h-0">
         <Sidebar currentTab={currentTab} onSelectTab={setCurrentTab} />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 max-w-[1720px] mx-auto w-full min-h-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 max-w-[1720px] mx-auto w-full min-h-0 smooth-scroll scroll-smooth overscroll-contain">
           {renderContent()}
         </main>
       </div>

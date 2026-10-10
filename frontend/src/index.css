@@ -5,6 +5,7 @@
 html, body, #root {
   height: 100%;
   overflow: hidden;
+  scroll-behavior: smooth;
 }
 
 @layer base {
@@ -13,10 +14,16 @@ html, body, #root {
   }
 }
 
+/* Hardware-accelerated smooth scrolling */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
 /* Custom glowing cyber utilities */
 .cyber-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
+  background: rgba(15, 23, 42, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.15);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
